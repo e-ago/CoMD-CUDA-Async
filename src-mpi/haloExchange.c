@@ -1352,6 +1352,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
    }    
 }
 
+#if 0
 
 void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis, 
    comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests,
@@ -1496,6 +1497,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 #endif
 
 }
+#endif
 
 #endif
 

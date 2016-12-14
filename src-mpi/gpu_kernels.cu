@@ -762,6 +762,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   return nBuf;
 }
 
+#if 0
 extern "C"
 int loadAtomsBufferFromGpu_KI(
                           char * sendBufM, int * sendSizeM, int nCellsM,
@@ -808,6 +809,7 @@ int loadAtomsBufferFromGpu_KI(
 
   return sendSize[0];
 }
+#endif
 
 extern "C"
 void loadForceBufferFromGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, 
