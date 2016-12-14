@@ -830,19 +830,12 @@ void exchangeDataForceGpu_KI(
 {
 
   scanCells(natoms_buf_sendM, nCellsM, sendCellListM, s->gpu.boxes.nAtoms, partial_sums_sendM, stream);
-  cudaDeviceSynchronize();
-cudaCheckError();
+//  cudaDeviceSynchronize();
+//cudaCheckError();
   scanCells(natoms_buf_sendP, nCellsP, sendCellListP, s->gpu.boxes.nAtoms, partial_sums_sendP, stream);
-  cudaDeviceSynchronize();
-cudaCheckError();
-
   scanCells(natoms_buf_recvM, nCellsM, recvCellListM, s->gpu.boxes.nAtoms, partial_sums_recvM, stream);
-  cudaDeviceSynchronize();
-cudaCheckError();
   scanCells(natoms_buf_recvP, nCellsP, recvCellListP, s->gpu.boxes.nAtoms, partial_sums_recvP, stream);
-  cudaDeviceSynchronize();
-cudaCheckError();
-
+  
   int block = THREAD_ATOM_CTA;
   //Corretto?
   int grid0=(nCellsM * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
@@ -866,12 +859,14 @@ cudaCheckError();
     natoms_buf_sendM, natoms_buf_sendP, natoms_buf_recvM, natoms_buf_recvP,
     grid0, grid1, n_scheds++, descs);
 
+#if 0
   cudaCheckError();
 
   cudaDeviceSynchronize();
 
   CUDA_GET_LAST_ERROR
-
+#endif
+  
 #if 0
   //LOCAL
   if(type == 1)

@@ -1244,8 +1244,11 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
                                        parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
                                        sim, sim->gpu_force_buf, sim->boundary_stream);
 
+#if 0
+
       if(getMyRank() != nbrRankP)
          printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+#endif
 
       POP_RANGE;
    }
@@ -1263,9 +1266,12 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
    if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
    {
+#if 0
+
       if(getMyRank() == 0)
          printf("SEND DIFFERENTS iAxis: %d\n", iAxis);
-      
+#endif
+
       PUSH_RANGE("DIFFERENTS", 1);
 
       exchangeDataForceGpu_KI(
@@ -1277,6 +1283,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
         parms->partial_sums_send[faceM], parms->partial_sums_send[faceP], parms->partial_sums_recv[faceM], parms->partial_sums_recv[faceP],
         sim->boundary_stream, iAxis);
 
+#if 0
       if((getMyRank() == 0))
          printf("DIFFERENTS ASPETTO. iAxis: %d\n", iAxis);
 
@@ -1284,6 +1291,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
       if((getMyRank() == 0))
          printf("DIFFERENTS TERMINATO. iAxis: %d\n", iAxis);
+#endif
    }
 
    if((getMyRank() ==  nbrRankM) && (getMyRank() ==  nbrRankP))
@@ -1318,12 +1326,16 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
    POP_RANGE;
 
+#if 0
+
   // comm_progress();
    cudaDeviceSynchronize();
 
    if(getMyRank() == 0)
       printf("Terminato loop iAxis %d.....\n", iAxis);
    //  stopTimer(commHaloTimer);
+#endif
+
 }
 
 #endif
