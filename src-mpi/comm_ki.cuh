@@ -224,7 +224,7 @@ __global__ void exchangeData_Force_KI(
     block--;
     if (block < grid0)
     {
-      LoadForceBuffer_KI((ForceMsg*)sendBufM_h, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
+      LoadForceBuffer_KI((ForceMsg*)sendBufM_d, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
 
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
@@ -233,7 +233,7 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-/*
+
         int tid_local = threadIdx.x;
         while(1)
         {
@@ -242,7 +242,6 @@ __global__ void exchangeData_Force_KI(
           if(tid_local >= sendSizeM) break;
         }
         __syncthreads();
-*/
 
         if(threadIdx.x == 0)
           mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
