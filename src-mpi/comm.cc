@@ -609,7 +609,7 @@ comm_dev_descs_t get_curr_descs_req()
     curr_dreqs = pdreqs + last_descs;
     start_dreqs = pdreqs + last_descs;
 
-    if(comm_rank == 0)
+    if(comm_rank == -1)
         printf("ALLOCO last_descs=%d, curr_dreqs=%p\n", last_descs, curr_dreqs);
 
     return curr_dreqs;
@@ -617,7 +617,7 @@ comm_dev_descs_t get_curr_descs_req()
 
 comm_dev_descs_t get_start_descs_req()
 {
-    if(comm_rank == 0)
+    if(comm_rank == -1)
         printf("get start_dreqs=%p\n", start_dreqs);
     return start_dreqs;
 }
@@ -629,7 +629,7 @@ comm_dev_descs_t update_curr_descs_pointer()
     last_descs++;
     curr_dreqs = pdreqs + last_descs;
 
-    if(comm_rank == 0)
+    if(comm_rank == -1)
         printf("update last_descs=%d, curr_dreqs=%p\n", last_descs, curr_dreqs);
 
     return curr_dreqs;
@@ -638,7 +638,7 @@ comm_dev_descs_t update_curr_descs_pointer()
 comm_dev_descs_t update_start_descs_pointer()
 {
     start_dreqs = start_dreqs + 1;
-    if(comm_rank == 0)
+    if(comm_rank == -1)
         printf("update start_dreqs=%p\n", start_dreqs);
 
     return start_dreqs;
@@ -694,7 +694,7 @@ int comm_prepare_isend(void *send_buf, size_t size, MPI_Datatype type, comm_reg_
         goto unreg;
     }
 
-    if(comm_rank == 0)
+    if(comm_rank == -1)
         printf("Set send descs (last_descs=%d), curr_dreqs->n_tx=%d\n", last_descs, curr_dreqs->n_tx);
 
 
