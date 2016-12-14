@@ -229,6 +229,51 @@ __global__ void exchangeData_Force_KI(
       if (0 == threadIdx.x)
           __threadfence();
 
+      if (last_block == grid0-1 && threadIdx.x == 0)
+          mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+    }
+
+    block -= grid0;
+    if (block < grid0)
+    {
+      LoadForceBuffer_KI((ForceMsg*)sendBufP, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
+      if (last_block == grid0-1 && threadIdx.x == 1)
+          mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+    }
+    else 
+    {
+      // use other blocks to wait and unpack
+      block -= grid0;
+      if (0 <= block && block < grid1) {
+
+        if (0 == threadIdx.x)
+          while (cub::ThreadLoad<cub::LOAD_CG>(&sched.done[1]) < 1); // { __threadfence_block(); }
+
+        __syncthreads();
+
+        // execute sub-task
+        UnloadForceBuffer_KI((ForceMsg*)recvBufP, nCellsP, recvCellListP, sGpu, natoms_buf_recvP, block, grid1);
+        UnloadForceBuffer_KI((ForceMsg*)recvBufM, nCellsM, recvCellListM, sGpu, natoms_buf_recvM, block, grid1);
+      }
+    }
+  }
+}
+
+#if 0
+
+
+else
+  {
+    block--;
+    if (block < grid0)
+    {
+      LoadForceBuffer_KI((ForceMsg*)sendBufM, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
+
+      // elect last block to wait
+      int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
+      if (0 == threadIdx.x)
+          __threadfence();
+
       if (last_block == grid0-1) 
       {
 /*        if(
@@ -263,10 +308,6 @@ __global__ void exchangeData_Force_KI(
         UnloadForceBuffer_KI((ForceMsg*)recvBufM, nCellsM, recvCellListM, sGpu, natoms_buf_recvM, block, grid1);
       }
     }
-  }
-}
-
-#if 0
 
 __global__ void localData_Force_KI(
   char *sendBufM, char *sendBufP, char *recvBufM, char *recvBufP, 
