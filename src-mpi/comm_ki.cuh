@@ -267,6 +267,18 @@ __global__ void exchangeData_Force_KI(
 
 #if 0
 
+if (last_block == grid0-1)
+      {
+        while(tid_local < sendSizeM)
+        {
+          sendBufP_host[tid_local] = sendBufP[tid_local];
+          tid_local += blockDim.x;
+        }
+        __syncthreads();
+
+        if(threadIdx.x == 1)
+          mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+      }
 
 else
   {
