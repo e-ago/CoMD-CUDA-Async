@@ -48,7 +48,9 @@ void unloadForceScanCells(int nCells, int *cellList, int *natoms_buf,
 int neighborListUpdateRequiredGpu_Async(SimGpu* sim, HaloExchange* haloExchange, int num, int iAxis);
 
 void exchangeDataForceGpu_KI(
-  char *sendBufM, char *sendBufP, char *recvBufM, char *recvBufP, 
+  char *sendBufM_h, char *sendBufP_h, 
+  char *sendBufM_d, char *sendBufP_d, 
+  char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
   SimFlat *s, 

@@ -762,73 +762,51 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   return nBuf;
 }
 
-
 extern "C"
-int loadAtomsBufferFromGpu_KI(char * sendBuf, int * sendSize,
-                          char* d_compactAtoms, int nCells, 
-                          int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, 
-                          int * d_workScan, real3_old shift, cudaStream_t stream, int type)
+int loadAtomsBufferFromGpu_KI(
+                          char * sendBufM, int * sendSizeM, int nCellsM,
+                          char * sendBufP, int * sendSizeP, int nCellsP,
+                          
+                          int *d_cellListM, int* d_cellOffsetsM,
+                          int *d_cellListP, int* d_cellOffsetsP,
+                           
+                          int * d_workScanM, real3_old shiftM,
+                          int * d_workScanP, real3_old shiftP,
+                           
+                          char* d_compactAtoms, SimGpu sim_gpu, cudaStream_t stream, int iAxis)
 {
-  scanCells(d_cellOffsets, nCells, d_cellList, sim_gpu.boxes.nAtoms, d_workScan, stream);
+  int gridM = nCellsM;
+  int gridP = nCellsP;
+  AtomMsgSoA msg_d_m, msg_d_p;
 
-  int block = MAXATOMS;
-  int grid = nCells;
-  AtomMsgSoA msg_d;
+  scanCells(d_cellOffsetsM, nCellsM, d_cellListM, sim_gpu.boxes.nAtoms, d_workScanM, stream);
+  scanCells(d_cellOffsetsP, nCellsP, d_cellListP, sim_gpu.boxes.nAtoms, d_workScanP, stream);
   
   //alias host and device buffers with AtomMsgSoA
-  getAtomMsgSoAPtr(sendBuf, &msg_d, sendSize[0]);
+  getAtomMsgSoAPtr(sendBufM, &msg_d_m, sendSizeM[0]);
+  getAtomMsgSoAPtr(sendBufP, &msg_d_p, sendSizeP[0]);
+
   //assemble compact array of particles
-  LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+ // LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+  
+  if (n_scheds >= TOT_SCHEDS) {
+    scheds_init<<<1, TOT_SCHEDS, 0, stream>>>();
+    n_scheds = 0;
+    CUDA_GET_LAST_ERROR
+  }
+
+  comm_dev_descs_t descs = get_start_descs_req();
+  descs = descs + iAxis;
+
+  exchangeData_Atoms_KI<<<(1+gridM+gridP+1), MAXATOMS, 0, stream>>>(
+    msg_d_m, msg_d_p,
+    d_cellListM, d_cellListP,
+    d_cellOffsetsM, d_cellOffsetsP,
+    shiftM[0], shiftM[1], shiftM[2],
+    shiftP[0], shiftP[1], shiftP[2],
+    gridM, gridP, sim_gpu, n_scheds++, descs);
 
   return sendSize[0];
-}
-
-extern "C"
-int unloadAtomsBufferToGpu_KI(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem) //cudaStream_t stream2,  cudaEvent_t * event_copy)
-{
-  int nBuf = sendSize;
-  //cudaStreamWaitEvent(stream, event_copy[indexEventCopy], 0);
-  //HostMem
-  //cudaStreamSynchronize(stream);
-  int *gid = (int*)gpu_buf; //buf; //gpu_buf
-
-  if(typeMem == 0)
-  {
-    cudaMemcpyAsync(gpu_buf, buf, nBuf * sizeof(AtomMsg), cudaMemcpyHostToDevice, stream);
-    gid = (int*)gpu_buf;
-   // cudaEventRecord(event_copy[indexEventCopy], stream2);
-  }
-  else
-    gid = (int*)buf;
-
-
-  //indexEventCopy = (indexEventCopy+1)%6;
-
-  // TODO: don't need to check if we're running cell-based approach
-  int nlUpdateRequired = neighborListUpdateRequiredGpu(&(sim->gpu)); //_Async(&(sim->gpu), haloExchange, num, iAxis);
-
-  int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
-  int block = THREAD_ATOM_CTA;
-
-  vec_t r,p;
-  int *type = gid + nBuf;
-  r.x = (real_t*)(type + nBuf);
-  r.y = r.x + nBuf;
-  r.z = r.y + nBuf;
-  p.x = r.z + nBuf;
-  p.y = p.x + nBuf;
-  p.z = p.y + nBuf;
-
-  // use temp arrays
-  int *d_iOffset = sim->flags;
-  int *d_boxId = sim->tmp_sort;
-
-  computeOffsets(nlUpdateRequired, sim, r, d_iOffset, d_boxId, nBuf, stream);
-  // map received particles to cells
-  UnloadAtomsBufferPacked<<<grid, block, 0, stream>>>(r, p, type, gid, nBuf, sim->gpu.atoms, d_iOffset);
-  //CUDA_GET_LAST_ERROR
-  cudaCheckError();
-  return nBuf;
 }
 
 extern "C"
@@ -889,7 +867,9 @@ static int n_scheds = TOT_SCHEDS;
 
 extern "C"
 void exchangeDataForceGpu_KI(
-  char *sendBufM, char *sendBufP, char *recvBufM, char *recvBufP, 
+  char *sendBufM_h, char *sendBufP_h, 
+  char *sendBufM_d, char *sendBufP_d, 
+  char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
   SimFlat *s, 
@@ -899,8 +879,6 @@ void exchangeDataForceGpu_KI(
 {
 
   scanCells(natoms_buf_sendM, nCellsM, sendCellListM, s->gpu.boxes.nAtoms, partial_sums_sendM, stream);
-//  cudaDeviceSynchronize();
-//cudaCheckError();
   scanCells(natoms_buf_sendP, nCellsP, sendCellListP, s->gpu.boxes.nAtoms, partial_sums_sendP, stream);
   scanCells(natoms_buf_recvM, nCellsM, recvCellListM, s->gpu.boxes.nAtoms, partial_sums_recvM, stream);
   scanCells(natoms_buf_recvP, nCellsP, recvCellListP, s->gpu.boxes.nAtoms, partial_sums_recvP, stream);
@@ -920,7 +898,9 @@ void exchangeDataForceGpu_KI(
   descs = descs + iAxis;
 
   exchangeData_Force_KI<<<(grid0+grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
-    sendBufM, sendBufP, recvBufM, recvBufP, 
+    sendBufM_h, sendBufP_h, 
+    sendBufM_d, sendBufP_d, 
+    recvBufM, recvBufP, 
     nCellsM, nCellsP, 
     sendCellListM, sendCellListP, recvCellListM, recvCellListP,
     s->gpu, 
