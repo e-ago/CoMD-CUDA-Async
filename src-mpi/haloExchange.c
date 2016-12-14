@@ -1239,30 +1239,26 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
    if(getMyRank() ==  nbrRankM)
    {
       PUSH_RANGE("nbrRankM", 1);
-      #if 1
-      if(getMyRank() == 0)
-         printf("--------> Async SEND  nbrRankM %d\n", nbrRankM);
-      #endif    
+
       loadForceBufferFromGpu_Async(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
                                        parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
                                        sim, sim->gpu_force_buf, sim->boundary_stream);
 
+      if(getMyRank() != nbrRankP)
+         printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+
       POP_RANGE;
    }
-
+      
    if((getMyRank() == nbrRankP))
    {
-         PUSH_RANGE("nbrRankP", 2);
+      PUSH_RANGE("nbrRankP", 2);
 
-      #if 1
+      loadForceBufferFromGpu_Async(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
+                                    parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+                                    sim, sim->gpu_force_buf, sim->boundary_stream);
 
-               if(getMyRank() == 0)
-                  printf("--------> Async SEND  nbrRankP %d\n", nbrRankP);
-      #endif
-      loadForceBufferFromGpu_Async(sendBufM, sendSizeM[iAxis], nCellsM, cellListGpuM, 
-                                          /* natoms_buf_send */ parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
-
+      POP_RANGE;
    }
 
    if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
@@ -1292,7 +1288,6 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
    if((getMyRank() ==  nbrRankM) && (getMyRank() ==  nbrRankP))
    {
-      #if 1
       unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->boundary_stream);
@@ -1301,9 +1296,14 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
       unloadForceScanCells(nCellsP, parms->recvCellsGpu[faceP], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
                                     sim, sim->boundary_stream);
-      #endif
+      //WAIT
+      PUSH_RANGE("UNLOAD", 4);
+      //-------- Wait recv on stream
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
+
       //UNPACK
-        //-------- Unload P
+      //-------- Unload P
       unloadForceBufferToGpu_Async(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeP);
@@ -1312,6 +1312,8 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
       unloadForceBufferToGpu_Async(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
+   
+      POP_RANGE;
    }
 
    POP_RANGE;
