@@ -200,7 +200,6 @@ __global__ void exchangeData_Force_KI(
 
   sched_info_t &sched = scheds[sched_id];
   int block = elect_block(sched);
-  int tid_local = threadIdx.x;
 
   //First block wait
   if(block == 0)
@@ -234,6 +233,7 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
+        int tid_local = threadIdx.x;
         while(1)
         {
           sendBufM_h[tid_local] = sendBufM_d[tid_local];
@@ -252,22 +252,7 @@ __global__ void exchangeData_Force_KI(
       if (block < grid0)
       {
         LoadForceBuffer_KI((ForceMsg*)sendBufP_d, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
-/*
-        int tid = block * blockDim.x + threadIdx.x;
-        int iCell = tid / MAXATOMS;
-        int iAtom = tid % MAXATOMS;
 
-        if (iCell < nCellsM) {
-          int iBox = sendCellListP[iCell];
-          int ii = iBox * MAXATOMS + iAtom;
-
-          if (iAtom < sGpu.boxes.nAtoms[iBox])
-          {
-            int nBuf = natoms_buf_sendP[iCell] + iAtom;
-            ((ForceMsg*)sendBufP)[nBuf].dfEmbed = sGpu.eam_pot.dfEmbed[ii];
-          }
-        }
-*/
         // elect last block to wait
         int last_block = elect_one(sched, grid0, 1); //__syncthreads(); inside
         if (0 == threadIdx.x)
@@ -275,6 +260,7 @@ __global__ void exchangeData_Force_KI(
 
         if (last_block == grid0-1)
         {
+          int tid_local = threadIdx.x;
           while(1)
           {
             sendBufP_h[tid_local] = sendBufP_d[tid_local];
