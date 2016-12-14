@@ -224,7 +224,7 @@ __global__ void exchangeData_Force_KI(
     {
       //LoadForceBuffer_KI((ForceMsg*)sendBufM, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
 
-      int tid = blockId * blockDim.x + threadIdx.x;
+      int tid = block * blockDim.x + threadIdx.x;
       int iCell = tid / MAXATOMS;
       int iAtom = tid % MAXATOMS;
 
