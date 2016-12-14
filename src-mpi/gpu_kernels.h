@@ -50,6 +50,7 @@ int neighborListUpdateRequiredGpu_Async(SimGpu* sim, HaloExchange* haloExchange,
 void exchangeDataForceGpu_KI(
   char *sendBufM_h, char *sendBufP_h, 
   char *sendBufM_d, char *sendBufP_d, 
+  int sendSizeM, int sendSizeP,
   char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,

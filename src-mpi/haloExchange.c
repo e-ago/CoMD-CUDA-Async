@@ -1437,6 +1437,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
       exchangeDataForceGpu_KI(
         sendBufM, sendBufP, haloExchange->d_sendBufM_Async[iAxis], haloExchange->d_sendBufP_Async[iAxis], 
+        sendSizeM[iAxis], sendSizeP[iAxis],
         recvBufM, recvBufP,
         nCellsM, nCellsP, 
         parms->sendCellsGpu[faceM], parms->sendCellsGpu[faceP], parms->recvCellsGpu[faceM], parms->recvCellsGpu[faceP],

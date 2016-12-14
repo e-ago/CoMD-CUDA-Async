@@ -871,6 +871,7 @@ extern "C"
 void exchangeDataForceGpu_KI(
   char *sendBufM_h, char *sendBufP_h, 
   char *sendBufM_d, char *sendBufP_d, 
+  int sendSizeM, int sendSizeP,
   char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
@@ -902,6 +903,7 @@ void exchangeDataForceGpu_KI(
   exchangeData_Force_KI<<<(grid0+grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
     sendBufM_h, sendBufP_h, 
     sendBufM_d, sendBufP_d, 
+    sendSizeM, sendSizeP,
     recvBufM, recvBufP, 
     nCellsM, nCellsP, 
     sendCellListM, sendCellListP, recvCellListM, recvCellListP,
