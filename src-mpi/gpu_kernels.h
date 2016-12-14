@@ -54,7 +54,7 @@ void exchangeDataForceGpu_KI(
   SimFlat *s, 
   int *natoms_buf_sendM, int *natoms_buf_sendP, int *natoms_buf_recvM, int *natoms_buf_recvP,
   int *partial_sums_sendM, int *partial_sums_sendP, int *partial_sums_recvM, int *partial_sums_recvP,
-  cudaStream_t stream, int iAxis);
+  cudaStream_t stream, int iAxis, int rankM, int rankP);
 
 #endif
 
