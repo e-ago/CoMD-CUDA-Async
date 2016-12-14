@@ -235,6 +235,7 @@ SimFlat* initSimulation(Command cmd)
    }
    sim->gpu.usePairlist = sim->usePairlist;
 
+   printf("REBUILD FORCE: %d\n", sim->gpu.atoms.neighborList.forceRebuildFlag);
    real_t skinDistance;
    if(useNL || sim->usePairlist){
       skinDistance = sim->pot->cutoff * cmd.relativeSkinDistance;
