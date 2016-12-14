@@ -853,7 +853,7 @@ void exchangeDataForceGpu_KI(
   if(rankM == rankP)
     typeSend = 1;
   
-  exchangeData_Force_KI<<<(grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
+  exchangeData_Force_KI<<<(grid0+grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
     sendBufM, sendBufP, recvBufM, recvBufP, 
     nCellsM, nCellsP, 
     sendCellListM, sendCellListP, recvCellListM, recvCellListP,
