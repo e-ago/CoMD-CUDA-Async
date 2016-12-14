@@ -222,8 +222,9 @@ __global__ void exchangeData_Force_KI(
     block--;
     if (block < grid0)
     {
-      //LoadForceBuffer_KI((ForceMsg*)sendBufM, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
+      LoadForceBuffer_KI((ForceMsg*)sendBufM, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
 
+/*
       int tid = block * blockDim.x + threadIdx.x;
       int iCell = tid / MAXATOMS;
       int iAtom = tid % MAXATOMS;
@@ -238,7 +239,7 @@ __global__ void exchangeData_Force_KI(
           ((ForceMsg*)sendBufM)[nBuf].dfEmbed = sGpu.eam_pot.dfEmbed[ii];
         }
       }
-
+*/
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
       if (0 == threadIdx.x)
@@ -252,7 +253,8 @@ __global__ void exchangeData_Force_KI(
       block -= grid0;
       if (block < grid0)
       {
-        //LoadForceBuffer_KI((ForceMsg*)sendBufP, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
+        LoadForceBuffer_KI((ForceMsg*)sendBufP, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
+/*
         int tid = block * blockDim.x + threadIdx.x;
         int iCell = tid / MAXATOMS;
         int iAtom = tid % MAXATOMS;
@@ -267,7 +269,7 @@ __global__ void exchangeData_Force_KI(
             ((ForceMsg*)sendBufP)[nBuf].dfEmbed = sGpu.eam_pot.dfEmbed[ii];
           }
         }
-
+*/
         // elect last block to wait
         int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
         if (0 == threadIdx.x)
