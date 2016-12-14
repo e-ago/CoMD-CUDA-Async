@@ -1286,6 +1286,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
       if((getMyRank() == 0))
          printf("DIFFERENTS TERMINATO. iAxis: %d\n", iAxis);
 #endif
+      POP_RANGE;
    }
 
    if((getMyRank() ==  nbrRankM) && (getMyRank() ==  nbrRankP))
@@ -1318,7 +1319,6 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
       POP_RANGE;
    }
 
-   POP_RANGE;
 
 #if 0
 
