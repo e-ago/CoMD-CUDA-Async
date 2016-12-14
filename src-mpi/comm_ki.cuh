@@ -251,7 +251,21 @@ __global__ void exchangeData_Force_KI(
     block -= grid0;
     if (block < grid0)
     {
-      LoadForceBuffer_KI((ForceMsg*)sendBufP, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
+      //LoadForceBuffer_KI((ForceMsg*)sendBufP, nCellsP, sendCellListP, sGpu, natoms_buf_sendP, block, grid0);
+      int tid = block * blockDim.x + threadIdx.x;
+      int iCell = tid / MAXATOMS;
+      int iAtom = tid % MAXATOMS;
+
+      if (iCell < nCellsM) {
+        int iBox = sendCellListP[iCell];
+        int ii = iBox * MAXATOMS + iAtom;
+
+        if (iAtom < sGpu.boxes.nAtoms[iBox])
+        {
+          int nBuf = natoms_buf_sendP[iCell] + iAtom;
+          ((ForceMsg*)sendBufP)[nBuf].dfEmbed = sGpu.eam_pot.dfEmbed[ii];
+        }
+      }
 
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
