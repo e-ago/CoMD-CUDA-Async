@@ -209,7 +209,8 @@ Command parseCommandLine(int argc, char** argv)
    cmd.initialDelta = 0.0;
    cmd.relativeSkinDistance= 0.1;
    cmd.doHilbert = 0;
-
+   //async required?!
+   cmd.usePairlist = 0;
    // gpu-specific
    memset(cmd.method, 0, 1024);
    strcpy(cmd.method, "thread_atom");

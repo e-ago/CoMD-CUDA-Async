@@ -278,7 +278,9 @@ void warp_reduce(real_t &ifx, real_t &ify, real_t &ifz, real_t &ie, real_t &irho
 }
 
 // emulate atomic add for doubles
-#if (__CUDACC_VER_MAJOR__ < 8)
+
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+#else
 __device__ inline void atomicAdd(double *address, double value)
 {
   unsigned long long oldval, newval, readback;
@@ -292,6 +294,20 @@ __device__ inline void atomicAdd(double *address, double value)
 }
 #endif
 
+/*#if (__CUDACC_VER_MAJOR__ < 8)
+__device__ inline void atomicAdd(double *address, double value)
+{
+  unsigned long long oldval, newval, readback;
+  oldval = __double_as_longlong(*address);
+  newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+  while ((readback = atomicCAS((unsigned long long*)address, oldval, newval)) != oldval)
+  {
+    oldval = readback;
+    newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+  }
+}
+#endif
+*/
 static __device__ __forceinline__ int get_warp_id()
 {
   return threadIdx.x >> 5;

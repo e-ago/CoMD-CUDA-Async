@@ -376,16 +376,18 @@ __global__ void UpdateBoundaryList(SimGpu sim, AtomListGpu list, int nCells, int
 __global__ void LoadAtomsBufferPacked(AtomMsgSoA compactAtoms, int *cellIDs, SimGpu sim_gpu, int *cellOffset, real_t shift_x, real_t shift_y, real_t shift_z)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
-  int iCell = tid / MAXATOMS;
-  int iAtom = tid % MAXATOMS;
+  int iCell, iAtom, ii, iBox, iBuf;
+
+  iCell = tid / MAXATOMS;
+  iAtom = tid % MAXATOMS;
   assert(iCell < sim_gpu.boxes.nLocalBoxes + 1 && iCell >= 0);
 
-  int iBox = cellIDs[iCell];
-  int ii = iBox * MAXATOMS + iAtom;
+  iBox = cellIDs[iCell];
+  ii = iBox * MAXATOMS + iAtom;
 
   if (iAtom < sim_gpu.boxes.nAtoms[iBox]) 
   {
-    int iBuf = cellOffset[iCell] + iAtom;
+    iBuf = cellOffset[iCell] + iAtom;
 
     // coalescing writes: structure of arrays
     compactAtoms.gid[iBuf] = sim_gpu.atoms.gid[ii];
@@ -399,6 +401,98 @@ __global__ void LoadAtomsBufferPacked(AtomMsgSoA compactAtoms, int *cellIDs, Sim
   }
 }
 
+
+__global__ void LoadAtomsBufferPacked_Async(AtomMsgSoA compactAtoms, int *cellIDs, SimGpu sim_gpu, int *cellOffset, real_t shift_x, real_t shift_y, real_t shift_z)
+{
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+  int iCell, iAtom, ii, iBox, iBuf;
+
+  iCell = tid / MAXATOMS;
+  iAtom = tid % MAXATOMS;
+  assert(iCell < sim_gpu.boxes.nLocalBoxes + 1 && iCell >= 0);
+
+  iBox = cellIDs[iCell];
+  ii = iBox * MAXATOMS + iAtom;
+
+  if (iAtom < sim_gpu.boxes.nAtoms[iBox]) 
+  {
+    iBuf = cellOffset[iCell] + iAtom;
+
+    // coalescing writes: structure of arrays
+    compactAtoms.gid[iBuf] = sim_gpu.atoms.gid[ii];
+    compactAtoms.type[iBuf] = sim_gpu.atoms.iSpecies[ii];
+    compactAtoms.rx[iBuf] = sim_gpu.atoms.r.x[ii] + shift_x;
+    compactAtoms.ry[iBuf] = sim_gpu.atoms.r.y[ii] + shift_y;
+    compactAtoms.rz[iBuf] = sim_gpu.atoms.r.z[ii] + shift_z;
+    compactAtoms.px[iBuf] = sim_gpu.atoms.p.x[ii];
+    compactAtoms.py[iBuf] = sim_gpu.atoms.p.y[ii];
+    compactAtoms.pz[iBuf] = sim_gpu.atoms.p.z[ii];
+  }
+
+  tid += (blockDim.x * gridDim.x);
+
+  iCell = tid / MAXATOMS;
+  iAtom = tid % MAXATOMS;
+  assert(iCell < sim_gpu.boxes.nLocalBoxes + 1 && iCell >= 0);
+
+  iBox = cellIDs[iCell];
+  ii = iBox * MAXATOMS + iAtom;
+
+  if (iAtom < sim_gpu.boxes.nAtoms[iBox]) 
+  {
+    iBuf = cellOffset[iCell] + iAtom;
+
+    // coalescing writes: structure of arrays
+    compactAtoms.gid[iBuf] = sim_gpu.atoms.gid[ii];
+    compactAtoms.type[iBuf] = sim_gpu.atoms.iSpecies[ii];
+    compactAtoms.rx[iBuf] = sim_gpu.atoms.r.x[ii] + shift_x;
+    compactAtoms.ry[iBuf] = sim_gpu.atoms.r.y[ii] + shift_y;
+    compactAtoms.rz[iBuf] = sim_gpu.atoms.r.z[ii] + shift_z;
+    compactAtoms.px[iBuf] = sim_gpu.atoms.p.x[ii];
+    compactAtoms.py[iBuf] = sim_gpu.atoms.p.y[ii];
+    compactAtoms.pz[iBuf] = sim_gpu.atoms.p.z[ii];
+  }
+}
+
+
+/*
+__global__ void LoadAtomsBufferPacked_Async(AtomMsgSoA compactAtoms, int *cellIDs, 
+  SimGpu sim_gpu, int *cellOffset, real_t shift_x, real_t shift_y, real_t shift_z, int sizeBuf, int sizeMsg)
+{
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+  int iCell, iAtom, ii, iBox, iBuf;
+
+  do
+  {
+    iCell = tid / MAXATOMS;
+    iAtom = tid % MAXATOMS;
+    assert(iCell < sim_gpu.boxes.nLocalBoxes + 1 && iCell >= 0);
+
+    iBox = cellIDs[iCell];
+    ii = iBox * MAXATOMS + iAtom;
+
+    if (iAtom < sim_gpu.boxes.nAtoms[iBox] && iBuf*sizeMsg < sizeMsg) 
+    {
+      iBuf = cellOffset[iCell] + iAtom;
+
+      // coalescing writes: structure of arrays
+      compactAtoms.gid[iBuf] = sim_gpu.atoms.gid[ii];
+      compactAtoms.type[iBuf] = sim_gpu.atoms.iSpecies[ii];
+      compactAtoms.rx[iBuf] = sim_gpu.atoms.r.x[ii] + shift_x;
+      compactAtoms.ry[iBuf] = sim_gpu.atoms.r.y[ii] + shift_y;
+      compactAtoms.rz[iBuf] = sim_gpu.atoms.r.z[ii] + shift_z;
+      compactAtoms.px[iBuf] = sim_gpu.atoms.p.x[ii];
+      compactAtoms.py[iBuf] = sim_gpu.atoms.p.y[ii];
+      compactAtoms.pz[iBuf] = sim_gpu.atoms.p.z[ii];
+    }
+    else
+      break;
+    
+    tid += (blockDim.x * gridDim.x);
+  }
+  while(1);
+
+}*/
 
 /// @param [out] boxId Stores the boxId for each received particle
 /// @param [in] nBuf number of received particles

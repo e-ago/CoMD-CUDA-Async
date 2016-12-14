@@ -7,6 +7,10 @@
 #include "mytype.h"
 #include <cuda_runtime.h>
 
+#ifdef USE_ASYNC
+#include "comm.h"
+#endif
+
 struct AtomsSt;
 struct LinkCellSt;
 struct DomainSt;
@@ -112,6 +116,38 @@ typedef struct HaloExchangeSt
    char *sendBufP;
    char *recvBufP;
    char *recvBufM;
+
+#ifdef USE_ASYNC
+
+   char ** sendBufM_Async;
+   char ** sendBufP_Async;
+   char ** recvBufP_Async;
+   char ** recvBufM_Async;
+
+   char ** d_sendBufM_Async;
+   char ** d_sendBufP_Async;
+   char ** d_recvBufP_Async;
+   char ** d_recvBufM_Async;
+
+   comm_reg_t  * regSendM;
+   comm_reg_t  * regSendP;
+   comm_reg_t  * regRecvM;
+   comm_reg_t  * regRecvP;
+
+   cudaEvent_t event_copy[6];
+   cudaStream_t stream_copy;
+   
+/*
+   comm_reg_t * updateRecvMem0, * updateSendMem0;
+   comm_reg_t * updateRecvMem1, * updateSendMem1;
+
+   int ** updateRecv0, ** updateRecv1;
+   int ** updateSend0, ** updateSend1;
+
+   int * updateNeighborListRequired;
+*/
+#endif
+
 } HaloExchange;
 
 /// Create a HaloExchange for atom data.
@@ -135,8 +171,7 @@ void sortAtomsInCell(struct AtomsSt* atoms, struct LinkCellSt* boxes, int iBox);
 typedef struct ForceMsgSt
 {
    real_t dfEmbed;
-}
-ForceMsg;
+} ForceMsg;
 
 /// Extra data members that are needed for the exchange of force data.
 /// For an force exchange, the HaloExchangeSt::parms will point to a
@@ -150,7 +185,12 @@ typedef struct ForceExchangeParmsSt
    int* recvCellsGpu[6]; //!< GPU List of link cells to recv for each face.
    int* natoms_buf[6];    // temp buf for scan result
    int* partial_sums[6];  // partial sums for scan
-}
-ForceExchangeParms;
+#if USE_ASYNC
+   int* natoms_buf_send[6];    // temp buf for scan result
+   int* natoms_buf_recv[6];
+   int* partial_sums_send[6];    // temp buf for scan result
+   int* partial_sums_recv[6];
+#endif
+} ForceExchangeParms;
 
 #endif

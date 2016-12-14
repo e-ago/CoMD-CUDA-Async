@@ -129,6 +129,13 @@ LinkCell* initLinkCells(const Domain* domain, real_t cutoff, int useHilbert)
       ll->localMin[i] = domain->localMin[i];
       ll->localMax[i] = domain->localMax[i];
       ll->gridSize[i] = domain->localExtent[i] / cutoff; // local number of boxes
+
+#if 0      
+      //elenago
+      printf("RANK[%d]: ll->gridSize[%d]: %d, domain->localExtent[i]: %f, cutoff: %f\n", 
+        getMyRank(), i, ll->gridSize[i], domain->localExtent[i], cutoff);
+#endif
+
       ll->boxSize[i] = domain->localExtent[i] / ((real_t) ll->gridSize[i]);
       ll->invBoxSize[i] = 1.0/ll->boxSize[i];
    }

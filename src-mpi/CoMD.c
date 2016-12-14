@@ -207,6 +207,8 @@ SimFlat* initSimulation(Command cmd)
    else {printf("Error: You have to specify a valid method: -m [thread_atom,thread_atom_nl,warp_atom,warp_atom_nl,cta_cell,cpu_nl]\n"); exit(-1);}
 
    int useNL = (sim->method == THREAD_ATOM_NL || sim->method == WARP_ATOM_NL || sim->method == CPU_NL)? 1 : 0;
+//   printf("RANK[%d]: useNL:%d,  sim->method:%d\n", getMyRank(), useNL, sim->method);
+
    sim->pot = initPotential(cmd.doeam, cmd.potDir, cmd.potName, cmd.potType);
 
    real_t latticeConstant = cmd.lat;
@@ -235,12 +237,13 @@ SimFlat* initSimulation(Command cmd)
 
    real_t skinDistance;
    if(useNL || sim->usePairlist){
-          skinDistance = sim->pot->cutoff * cmd.relativeSkinDistance; 
-          if (printRank())
-                  printf("Skin-Distance: %f\n",skinDistance);
+      skinDistance = sim->pot->cutoff * cmd.relativeSkinDistance;
+      if (printRank())
+        printf("Skin-Distance: %f\n",skinDistance);
    } else
           skinDistance = 0.0;
    sim->skinDistance = skinDistance;
+   
    if(sim->usePairlist)
        sim->gpu.atoms.neighborList.skinDistanceHalf2 = skinDistance*skinDistance/4;
    sim->boxes = initLinkCells(sim->domain, sim->pot->cutoff + skinDistance, cmd.doHilbert);

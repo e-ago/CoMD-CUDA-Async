@@ -60,6 +60,12 @@
 extern "C"
 {
 #include "parallel.h"
+
+#ifdef USE_ASYNC
+  #include "mp.h"
+  #include "comm_ki.cuh"
+#endif
+
 }
 
 extern "C"
@@ -641,6 +647,257 @@ void unloadForceBufferToGpu(char *buf, int nBuf, int nCells, int *cellList, int 
   CUDA_GET_LAST_ERROR
 }
 
+
+#ifdef USE_ASYNC
+
+//#include <sys/types.h>
+//#include <unistd.h>
+
+#define cudaCheckError() {                                          \
+ cudaError_t e=cudaGetLastError();                                 \
+ if(e!=cudaSuccess) {                                              \
+  printf("Cuda failure %s:%d: '%s'\n",__FILE__,__LINE__,cudaGetErrorString(e));           \
+  exit(0); \
+ }                                                                 \
+}
+
+extern "C"
+int loadAtomsBufferFromGpu_Async(char * sendBuf, int * sendSize,
+                          char* d_compactAtoms, int nCells, 
+                          int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, 
+                          int * d_workScan, real3_old shift, cudaStream_t stream, int type)
+{
+  scanCells(d_cellOffsets, nCells, d_cellList, sim_gpu.boxes.nAtoms, d_workScan, stream);
+  //cudaCheckError();
+
+  if(sendSize[0] == 0)
+  {
+    cudaStreamSynchronize(stream);
+    cudaMemcpy(sendSize, &(d_cellOffsets[nCells]), sizeof(int), cudaMemcpyDeviceToHost); //, stream);
+    assert(sendSize[0] != 0);
+  }
+  
+  //if(getMyRank() == 0)
+  //  printf("----> Load Atoms Send Size: %d, type: %d, nCells: %d\n", *sendSize, type, nCells);
+
+  int block = MAXATOMS;
+  int grid = nCells;
+  AtomMsgSoA msg_d;
+  
+  //devicemem
+  if(type == 1)
+  {
+    //alias host and device buffers with AtomMsgSoA
+    getAtomMsgSoAPtr(sendBuf, &msg_d, sendSize[0]);
+    //assemble compact array of particles
+    LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+    //cudaCheckError();
+  }
+  else
+  {
+    //alias host and device buffers with AtomMsgSoA
+    getAtomMsgSoAPtr(/*d_compactAtoms */sendBuf, &msg_d, sendSize[0]);
+    //assemble compact array of particles
+    LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+    //cudaCheckError();
+    //cudaMemcpyAsync(sendBuf, d_compactAtoms, sendSize[0]*sizeof(AtomMsg), cudaMemcpyDeviceToHost, stream);
+  }
+
+
+#if 0
+  LoadAtomsBufferPacked_Async<<<grid, block,0,stream>>>(d_cellList, sim_gpu, d_cellOffsets, 
+    shift[0], shift[1], shift[2], nCells, sendBuf); //d_compactAtoms); //, (sendBuf+4) /*d_compactAtoms*/);  
+#endif
+
+  return sendSize[0];
+}
+
+static int indexEventCopy=0;
+
+extern "C"
+int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem) //cudaStream_t stream2,  cudaEvent_t * event_copy)
+{
+  int nBuf = sendSize;
+  //cudaStreamWaitEvent(stream, event_copy[indexEventCopy], 0);
+  //HostMem
+  //cudaStreamSynchronize(stream);
+  int *gid = (int*)gpu_buf; //buf; //gpu_buf
+
+  if(typeMem == 0)
+  {
+    cudaMemcpyAsync(gpu_buf, buf, nBuf * sizeof(AtomMsg), cudaMemcpyHostToDevice, stream);
+    gid = (int*)gpu_buf;
+   // cudaEventRecord(event_copy[indexEventCopy], stream2);
+  }
+  else
+    gid = (int*)buf;
+
+
+  //indexEventCopy = (indexEventCopy+1)%6;
+
+  // TODO: don't need to check if we're running cell-based approach
+  int nlUpdateRequired = neighborListUpdateRequiredGpu(&(sim->gpu)); //_Async(&(sim->gpu), haloExchange, num, iAxis);
+
+  int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+
+  vec_t r,p;
+  int *type = gid + nBuf;
+  r.x = (real_t*)(type + nBuf);
+  r.y = r.x + nBuf;
+  r.z = r.y + nBuf;
+  p.x = r.z + nBuf;
+  p.y = p.x + nBuf;
+  p.z = p.y + nBuf;
+
+  // use temp arrays
+  int *d_iOffset = sim->flags;
+  int *d_boxId = sim->tmp_sort;
+
+  computeOffsets(nlUpdateRequired, sim, r, d_iOffset, d_boxId, nBuf, stream);
+  // map received particles to cells
+  UnloadAtomsBufferPacked<<<grid, block, 0, stream>>>(r, p, type, gid, nBuf, sim->gpu.atoms, d_iOffset);
+  //CUDA_GET_LAST_ERROR
+  cudaCheckError();
+  return nBuf;
+}
+
+extern "C"
+void loadForceBufferFromGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, 
+  SimFlat *s, char *gpu_buf, cudaStream_t stream)
+{
+  //printf("RANK[%d], load force scanCells. nCells: %d\n", getMyRank(), nCells);
+  scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+  // copy data to compacted array
+  int grid = (nCells * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+  LoadForceBuffer<<<grid, block, 0, stream>>>((ForceMsg*)buf, nCells, cellList, s->gpu, natoms_buf);
+  cudaCheckError();
+  CUDA_GET_LAST_ERROR
+}
+
+extern "C"
+void unloadForceScanCells(int nCells, int *cellList, int *natoms_buf, 
+  int *partial_sums, SimFlat *s, cudaStream_t stream)
+{
+  //if(getMyRank() == 0)
+  //  printf("unload force scanCells. nCells: %d\n", nCells);
+  scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+  cudaCheckError();
+  CUDA_GET_LAST_ERROR
+}
+
+extern "C"
+void unloadForceBufferToGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, 
+  int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type)
+{
+  //scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+
+  //Hostmem
+  if(type == 0)
+    cudaMemcpyAsync(gpu_buf, buf, bufSize, cudaMemcpyHostToDevice, stream);
+  else
+    gpu_buf = buf;
+
+  //scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+
+
+  //cudaCheckError();
+  //printf("unload force scanCells. nCells: %d\n", nCells);
+  
+  // copy data for the list of cells
+  int grid = (nCells * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+  UnloadForceBuffer<<<grid, block, 0, stream>>>((ForceMsg*)  gpu_buf /*buf*/, nCells, cellList, s->gpu, natoms_buf);
+  CUDA_GET_LAST_ERROR
+  
+}
+
+//GPU-Init
+
+#define TOT_SCHEDS 128
+static int n_scheds = TOT_SCHEDS;
+
+extern "C"
+void exchangeDataForceGpu_KI(
+  char *sendBufM, char *sendBufP, char *recvBufM, char *recvBufP, 
+  int nCellsM, int nCellsP, 
+  int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
+  SimFlat *s, 
+  int *natoms_buf_sendM, int *natoms_buf_sendP, int *natoms_buf_recvM, int *natoms_buf_recvP,
+  int *partial_sums_sendM, int *partial_sums_sendP, int *partial_sums_recvM, int *partial_sums_recvP,
+  cudaStream_t stream, int iAxis)
+{
+
+  scanCells(natoms_buf_sendM, nCellsM, sendCellListM, s->gpu.boxes.nAtoms, partial_sums_sendM, stream);
+  cudaDeviceSynchronize();
+cudaCheckError();
+  scanCells(natoms_buf_sendP, nCellsP, sendCellListP, s->gpu.boxes.nAtoms, partial_sums_sendP, stream);
+  cudaDeviceSynchronize();
+cudaCheckError();
+
+  scanCells(natoms_buf_recvM, nCellsM, recvCellListM, s->gpu.boxes.nAtoms, partial_sums_recvM, stream);
+  cudaDeviceSynchronize();
+cudaCheckError();
+  scanCells(natoms_buf_recvP, nCellsP, recvCellListP, s->gpu.boxes.nAtoms, partial_sums_recvP, stream);
+  cudaDeviceSynchronize();
+cudaCheckError();
+
+  int block = THREAD_ATOM_CTA;
+  //Corretto?
+  int grid0=(nCellsM * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int grid1=(nCellsP * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+
+  if (n_scheds >= TOT_SCHEDS) {
+    scheds_init<<<1, TOT_SCHEDS, 0, stream>>>();
+    n_scheds = 0;
+    CUDA_GET_LAST_ERROR
+  }
+
+  comm_dev_descs_t descs = get_start_descs_req();
+  descs = descs + iAxis;
+
+
+  exchangeData_Force_KI<<<(grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
+    sendBufM, sendBufP, recvBufM, recvBufP, 
+    nCellsM, nCellsP, 
+    sendCellListM, sendCellListP, recvCellListM, recvCellListP,
+    s->gpu, 
+    natoms_buf_sendM, natoms_buf_sendP, natoms_buf_recvM, natoms_buf_recvP,
+    grid0, grid1, n_scheds++, descs);
+
+  cudaCheckError();
+
+  cudaDeviceSynchronize();
+
+  CUDA_GET_LAST_ERROR
+
+#if 0
+  //LOCAL
+  if(type == 1)
+  {
+    /*
+    int block = THREAD_ATOM_CTA;
+    int grid0=(nCellsM * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+    int grid1=(nCellsM * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+
+    localData_Force_KI<<<(grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
+      sendBufM, sendBufP, recvBufM, recvBufP, 
+      nCellsM, nCellsP, 
+      sendCellListM, sendCellListP, recvCellListM, recvCellListP,
+      s, 
+      natoms_buf_sendM, natoms_buf_sendP, natoms_buf_recvM, natoms_buf_recvP,
+      grid0, grid1, n_scheds++, descs);
+
+    CUDA_GET_LAST_ERROR
+    */
+  }
+#endif
+
+}
+#endif
+
+
 extern "C"
 void sortAtomsGpu(SimFlat *s, cudaStream_t stream)
 {
@@ -738,6 +995,153 @@ void updateNeighborListRequiredKernel(SimGpu sim, int* updateNeighborListRequire
           *updateNeighborListRequired = 1;
 }
 
+#if 0
+/USE_ASYNC
+
+
+#define TOT_SCHEDS 1024
+#define SCHEDS_MAX_TYPE 2
+
+typedef struct sched_info {
+  mp::sem32_t sema;
+  unsigned int block;
+  unsigned int done[SCHEDS_MAX_TYPE];
+} sched_info_t;
+
+__device__ sched_info_t scheds[TOT_SCHEDS];
+
+static int n_scheds = TOT_SCHEDS;
+
+__global__ void scheds_init()
+{
+  int j = threadIdx.x;
+  assert(gridDim.x == 1);
+  assert(blockDim.x >= TOT_SCHEDS);
+  if (j < TOT_SCHEDS) {
+    scheds[j].sema.sem = 0;
+    scheds[j].sema.value = 1;
+    scheds[j].block = 0;
+    for (int i = 0; i < SCHEDS_MAX_TYPE; ++i)
+      scheds[j].done[i] = 0;
+  }
+}
+
+__device__ static inline unsigned int elect_block(sched_info &sched)
+{
+  unsigned int ret;
+  const int n_grids = gridDim.x; // BUG: account for .y and .z
+  __shared__ unsigned int block;
+  if (0 == threadIdx.x) {
+    // 1st guy gets 0
+    block = atomicInc(&sched.block, n_grids);
+  }
+  __syncthreads();
+  ret = block;
+  return ret;
+}
+
+__device__ static inline unsigned int elect_one(sched_info &sched, int grid_size, int idx)
+{
+  unsigned int ret;
+  __shared__ unsigned int last;
+  assert(idx < max_types);
+  if (0 == threadIdx.x && 0 == threadIdx.y) {
+    // 1st guy gets 0
+    // ((old >= val) ? 0 : (old+1))
+    last = atomicInc(&sched.done[idx], grid_size);
+
+  }
+  __syncthreads();
+  ret = last;
+  return ret;
+}
+
+
+__global__
+__launch_bounds__(THREAD_ATOM_CTA, THREAD_ATOM_ACTIVE_CTAS)
+void updateNeighborListRequiredKernel_async(
+  SimGpu sim, int* updateNeighborListRequired, int * recvBuffer, int sched_id, int numSends, 
+  int gridSize, 
+  struct comm_dev_descs *pdescs
+  )
+{
+  sched_info_t &sched = scheds[sched_id];
+  int block = elect_block(sched);
+  //First block wait
+  if(block == 0)
+  {
+    assert(blockDim.x >= pdescs->n_wait);
+    if (threadIdx.x < pdescs->n_wait) {
+      mp::device::mlx5::wait(pdescs->wait[threadIdx.x]);
+      // write MP trk flag
+      // note: no mem barrier here!!!
+      mp::device::mlx5::signal(pdescs->wait[threadIdx.x]);
+    }
+    __syncthreads();
+
+    if (0 == threadIdx.x) {
+      int index=0;
+      int sum=0;
+      for(index=0; index < numSends; index++)
+        sum += recvBuffer[index];
+
+      if(sum > 0)   recvBuffer[0] = 1;
+      else          recvBuffer[0] = 0;
+    }
+  }
+  else
+  {
+    block--;
+    int tid = block * blockDim.x + threadIdx.x; 
+    while(tid < sim.a_list.n)
+    {
+      // compute box ID and local atom ID
+      int iAtom = sim.a_list.atoms[tid];
+      int iBox = sim.a_list.cells[tid]; 
+      int iOff = iBox * MAXATOMS + iAtom;
+
+      // fetch position
+      real_t dx = sim.atoms.r.x[iOff] - sim.atoms.neighborList.lastR.x[tid];
+      real_t dy = sim.atoms.r.y[iOff] - sim.atoms.neighborList.lastR.y[tid];
+      real_t dz = sim.atoms.r.z[iOff] - sim.atoms.neighborList.lastR.z[tid];
+
+      if( (dx*dx + dy*dy + dz*dz) > sim.atoms.neighborList.skinDistanceHalf2 )
+        *updateNeighborListRequired = 1;
+
+      tid += gridDim.x*blockDim.x;
+    }
+
+    assert(sched_id >= 0 && sched_id < TOT_SCHEDS);
+    sched_info_t &sched = scheds[sched_id];
+    // elect last block to wait
+    int last_block = elect_one(sched, gridSize, 0); //__syncthreads(); inside
+    //if (0 == threadIdx.x)
+    //    __threadfence();
+
+    if (last_block == gridSize-1) 
+    {
+      __syncthreads();
+      __threadfence();
+
+      if (threadIdx.x < pdescs->n_ready) {
+        // wait for ready
+        //mp::device::wait_geq(pdescs->ready[threadIdx.x]);
+        // signal NIC
+        mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+      }
+#if 0
+      if (threadIdx.x < numSends /*pdescs->n_tx*/) {
+          mp::device::mlx5::send(tx_d[threadIdx.x]);
+        //mp::device::mlx5::send(pdescs->tx[startSend+threadIdx.x]);
+      //  mp::device::mlx5::wait(tx_wait_d[threadIdx.x]);
+      //  mp::device::mlx5::signal(tx_wait_d[threadIdx.x]);
+      }
+#endif
+    }
+  }
+}
+#endif
+
 __global__
 __launch_bounds__(CTA_CELL_CTA,CTA_CELL_ACTIVE_CTAS)
 void updatePairlistRequiredKernel(SimGpu sim, int * updatePairlistRequired)
@@ -794,8 +1198,141 @@ int pairlistUpdateRequiredGpu(SimGpu * sim)
     return sim->atoms.neighborList.updateNeighborListRequired;
 }
 
+static int updateTxReq=0;
+static int updateRxReq=0;
+
 /// \param [inout] neighborList NeighborList (the only value that might be changed is updateNeighborListRequired
 /// \return 1 iff neighborlist update is required in this step
+#if 0
+extern "C"
+int neighborListUpdateRequiredGpu_Async(SimGpu* sim, HaloExchange* haloExchange, int num, int iAxis)
+{
+if(getMyRank() == 0)
+    printf("sim->atoms.neighborList.forceRebuildFlag: %d\n", sim->atoms.neighborList.forceRebuildFlag);
+  
+        if(sim->atoms.neighborList.forceRebuildFlag== 1){
+                sim->atoms.neighborList.updateNeighborListRequired = 1; 
+        }else if(sim->atoms.neighborList.updateNeighborListRequired == -1){
+         
+          if (n_scheds >= TOT_SCHEDS) {
+            scheds_init<<<1, TOT_SCHEDS, 0, NULL>>>();
+            n_scheds = 0;
+          }
+
+          comm_request_t update_recv_requests[16];
+          comm_request_t update_send_requests[16];
+          
+          int updateSendReqsIndex=0;
+          int updateRecvReqsIndex=0;
+          //UPDATE ASYNC      
+
+          if(getMyRank() == 0)
+            printf("--> Async iAxis: %d, num: %d\n", iAxis, num);
+
+         for(int indexRank=0; indexRank < getNRanks(); indexRank++)
+         {
+            if(indexRank != getMyRank())
+            {
+              if(num == 0)
+              {
+                comm_irecv(&(haloExchange->updateRecv0[iAxis][indexRank]),
+                           1,
+                           MPI_INT,
+                           &(haloExchange->updateRecvMem0[iAxis]),
+                           indexRank,
+                           &(update_recv_requests[updateRecvReqsIndex]));
+                
+
+                comm_prepare_isend(&(haloExchange->updateSend0[iAxis][indexRank]),
+                                    1,
+                                    MPI_INT,
+                                    &(haloExchange->updateSendMem0[iAxis]),
+                                    indexRank,
+                                    &update_send_requests[updateSendReqsIndex]);                
+                
+                //ready?
+              }
+              else
+              {
+                comm_irecv(&(haloExchange->updateRecv1[iAxis][indexRank]),
+                           1,
+                           MPI_INT,
+                           &(haloExchange->updateRecvMem1[iAxis]),
+                           indexRank,
+                           &(update_recv_requests[updateRecvReqsIndex]));
+                
+                
+
+                comm_prepare_isend(&(haloExchange->updateSend1[iAxis][indexRank]),
+                                    1,
+                                    MPI_INT,
+                                    &(haloExchange->updateSendMem1[iAxis]),
+                                    indexRank,
+                                    &update_send_requests[updateSendReqsIndex]);     
+              }
+
+               updateSendReqsIndex++;
+               updateRecvReqsIndex++;
+            }
+         }
+
+          comm_prepare_wait_all(getNRanks()-1, update_recv_requests);
+          comm_dev_descs_t descs = comm_prepared_requests();
+
+                    if(getMyRank() == 0)
+            printf("--> Async n_scheds %d\n", n_scheds);
+
+
+          int * recvBuf;
+          if(num==0)
+          {
+            recvBuf = haloExchange->updateRecv0[iAxis];
+            updateNeighborListRequiredKernel_async<<<14, 1024>>>(*sim, haloExchange->updateNeighborListRequired, recvBuf, n_scheds++, getNRanks()-1, 14, descs);
+          }
+          else
+          {
+            recvBuf = haloExchange->updateRecv1[iAxis];
+            updateNeighborListRequiredKernel_async<<<14, 1024>>>(*sim, haloExchange->updateNeighborListRequired, recvBuf, n_scheds++, getNRanks()-1, 14, descs);
+          }
+//        }else {
+                //only do a real neighborlistupdate check if the particles have moved (indicated by updateNeighborListRequired == -1)
+#if 0
+                int grid = (sim->a_list.n + (THREAD_ATOM_CTA-1))/ THREAD_ATOM_CTA;
+                int block = THREAD_ATOM_CTA;
+                int *d_updateNeighborListRequired;
+                int h_updateNeighborListRequired; 
+                cudaMalloc(&d_updateNeighborListRequired, sizeof(int));
+                cudaMemset(d_updateNeighborListRequired, 0, sizeof(int));
+#endif
+                
+
+#if 0
+                //updateNeighborListRequiredKernel<<<grid, block>>>(*sim, d_updateNeighborListRequired);
+
+//                cudaMemcpy(&h_updateNeighborListRequired,d_updateNeighborListRequired, sizeof(int), cudaMemcpyDeviceToHost);
+  //              cudaFree(d_updateNeighborListRequired);
+
+                int tmpUpdateNeighborListRequired = 0;
+                //TODO this function needs to be called for multi-node correctness. However, there are (most likely) other things that case bugs with the 
+                //multi-node version but this is one thing that definitely needs to be done. It just assure that if one node has to rebuild its NL, then
+                //all nodes have to do so.
+                addIntParallel(&h_updateNeighborListRequired, &tmpUpdateNeighborListRequired, 1); 
+                   
+                if(tmpUpdateNeighborListRequired > 0)
+                        sim->atoms.neighborList.updateNeighborListRequired = 1; 
+                else
+                        sim->atoms.neighborList.updateNeighborListRequired = 0; 
+#endif
+            cudaStreamSynchronize(NULL);
+            sim->atoms.neighborList.updateNeighborListRequired = recvBuf[0];
+        }
+
+  CUDA_GET_LAST_ERROR
+
+        return  sim->atoms.neighborList.updateNeighborListRequired;
+}
+#endif
+
 extern "C"
 int neighborListUpdateRequiredGpu(SimGpu* sim)
 {
@@ -808,9 +1345,10 @@ int neighborListUpdateRequiredGpu(SimGpu* sim)
                 int block = THREAD_ATOM_CTA;
                 int *d_updateNeighborListRequired;
                 int h_updateNeighborListRequired; 
+                
                 cudaMalloc(&d_updateNeighborListRequired, sizeof(int));
-
                 cudaMemset(d_updateNeighborListRequired, 0, sizeof(int));
+
                 updateNeighborListRequiredKernel<<<grid, block>>>(*sim, d_updateNeighborListRequired);
 
                 cudaMemcpy(&h_updateNeighborListRequired,d_updateNeighborListRequired, sizeof(int), cudaMemcpyDeviceToHost);
@@ -832,7 +1370,6 @@ int neighborListUpdateRequiredGpu(SimGpu* sim)
 
         return  sim->atoms.neighborList.updateNeighborListRequired;
 }
-
 
 //Neighborlist generation for warp_atoms_NL only
 //> maxNeighbors is the maximum number of entries in neighbor list

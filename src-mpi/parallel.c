@@ -28,6 +28,10 @@ static int nRanks = 1;
 
 #endif
 
+#ifdef USE_ASYNC
+#include "comm.h"
+#endif
+
 int getNRanks()
 {
    return nRanks;
@@ -66,12 +70,22 @@ void initParallel(int* argc, char*** argv)
    MPI_Init(argc, argv);
    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &nRanks);
+
+   #ifdef USE_ASYNC
+   comm_init(MPI_COMM_WORLD);
+   #endif
+
 #endif
 }
 
 void destroyParallel()
 {
 #ifdef DO_MPI
+
+   #ifdef USE_ASYNC
+      comm_finalize();
+   #endif
+
    MPI_Finalize();
 #endif
 }
