@@ -235,10 +235,13 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-        while(tid_local < sendSizeM)
+        if(threadIdx.x == 0)
+          printf("sendSizeM: %d, tid_local: %d blockDim.x: %d\n", sendSizeM, tid_local, blockDim.x);
+        while(1)
         {
           sendBufM_h[tid_local] = sendBufM_d[tid_local];
           tid_local += blockDim.x;
+          if(tid_local >= sendSizeM) break;
         }
         __syncthreads();
 
@@ -259,11 +262,16 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-        while(tid_local < sendSizeP)
+        if(threadIdx.x == 0)
+          printf("sendSizeP: %d, tid_local: %d blockDim.x: %d\n", sendSizeP, tid_local, blockDim.x);
+       
+        while(1)
         {
           sendBufP_h[tid_local] = sendBufP_d[tid_local];
           tid_local += blockDim.x;
+          if(tid_local >= sendSizeP) break;
         }
+       
         __syncthreads();
 
         if(threadIdx.x == 1)
