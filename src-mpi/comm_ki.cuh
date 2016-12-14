@@ -235,8 +235,6 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-        if(threadIdx.x == 0)
-          printf("sendSizeM: %d, tid_local: %d blockDim.x: %d\n", sendSizeM, tid_local, blockDim.x);
         while(1)
         {
           sendBufM_h[tid_local] = sendBufM_d[tid_local];
@@ -244,6 +242,10 @@ __global__ void exchangeData_Force_KI(
           if(tid_local >= sendSizeM) break;
         }
         __syncthreads();
+
+         if(threadIdx.x == 0)
+          printf("sendSizeM: %d, tid_local: %d blockDim.x: %d\n", sendSizeM, tid_local, blockDim.x);
+       
 
         if(threadIdx.x == 0)
           mp::device::mlx5::send(pdescs->tx[threadIdx.x]);        
@@ -262,9 +264,7 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-        if(threadIdx.x == 0)
-          printf("sendSizeP: %d, tid_local: %d blockDim.x: %d\n", sendSizeP, tid_local, blockDim.x);
-       
+        
         while(1)
         {
           sendBufP_h[tid_local] = sendBufP_d[tid_local];
@@ -273,6 +273,10 @@ __global__ void exchangeData_Force_KI(
         }
        
         __syncthreads();
+
+ if(threadIdx.x == 1)
+          printf("sendSizeP: %d, tid_local: %d blockDim.x: %d\n", sendSizeP, tid_local, blockDim.x);
+      
 
         if(threadIdx.x == 1)
           mp::device::mlx5::send(pdescs->tx[threadIdx.x]);        
