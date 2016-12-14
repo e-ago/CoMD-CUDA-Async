@@ -188,6 +188,7 @@ __global__ void exchangeData_Force_KI(
   char *sendBufM_h, char *sendBufP_h, 
   char *sendBufM_d, char *sendBufP_d,
   int sendSizeM, int sendSizeP,
+  char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
   SimGpu sGpu, 
