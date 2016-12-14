@@ -902,8 +902,7 @@ void exchangeDataForceGpu_KI(
 
   exchangeData_Force_KI<<<(grid0+grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
     sendBufM_h, sendBufP_h, 
-    sendBufM_d, sendBufP_d, 
-    sendSizeM, sendSizeP,
+//    sendSizeM, sendSizeP,
     recvBufM, recvBufP, 
     nCellsM, nCellsP, 
     sendCellListM, sendCellListP, recvCellListM, recvCellListP,

@@ -1436,7 +1436,8 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
       PUSH_RANGE("DIFFERENTS", 1);
 
       exchangeDataForceGpu_KI(
-        sendBufM, sendBufP, haloExchange->d_sendBufM_Async[iAxis], haloExchange->d_sendBufP_Async[iAxis], 
+        sendBufM, sendBufP,
+        haloExchange->d_sendBufM_Async[iAxis], haloExchange->d_sendBufP_Async[iAxis], 
         sendSizeM[iAxis], sendSizeP[iAxis],
         recvBufM, recvBufP,
         nCellsM, nCellsP, 
