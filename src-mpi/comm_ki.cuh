@@ -269,7 +269,7 @@ __global__ void exchangeData_Force_KI(
           }
           __syncthreads();
 
-          if(threadIdx.x == 0)
+          if(threadIdx.x == 1)
             mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
         }
       }
