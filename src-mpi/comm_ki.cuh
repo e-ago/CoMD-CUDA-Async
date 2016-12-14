@@ -233,7 +233,6 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-
         int tid_local = threadIdx.x;
         while(1)
         {
