@@ -190,7 +190,7 @@ __global__ void exchangeData_Force_KI(
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
   SimGpu sGpu, 
   int *natoms_buf_sendM, int *natoms_buf_sendP, int *natoms_buf_recvM, int *natoms_buf_recvP,
-  int grid0, int grid1, int sched_id, struct comm_dev_descs *pdescs, int typeSend)
+  int grid0, int grid1, int sched_id, struct comm_dev_descs *pdescs)
 {
   assert(sched_id >= 0 && sched_id < TOT_SCHEDS);
   assert(gridDim.x >= grid0+grid1+1);
