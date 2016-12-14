@@ -205,7 +205,6 @@ __global__ void exchangeData_Force_KI(
     
     if (threadIdx.x < pdescs->n_wait) {
       //printf("WAIT sched_id=%d, block=%d blockIdx.x=%d threadIdx.x=%d, pdescs->n_wait=%d\n", sched_id, block, blockIdx.x, threadIdx.x, pdescs->n_wait);
-      
       mp::device::mlx5::wait(pdescs->wait[threadIdx.x]);
       mp::device::mlx5::signal(pdescs->wait[threadIdx.x]);
     }
@@ -214,7 +213,7 @@ __global__ void exchangeData_Force_KI(
 
     if (0 == threadIdx.x) {
       // signal other blocks
-      ACCESS_ONCE_COMM(sched.done[1]) = 1;   
+      ACCESS_ONCE_COMM(sched.done[2]) = 1;   
     }
   }
   else
@@ -271,7 +270,7 @@ __global__ void exchangeData_Force_KI(
         }
 */
         // elect last block to wait
-        int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
+        int last_block = elect_one(sched, grid0, 1); //__syncthreads(); inside
         if (0 == threadIdx.x)
             __threadfence();
 
@@ -285,7 +284,7 @@ __global__ void exchangeData_Force_KI(
         if (0 <= block && block < grid1) {
 
           if (0 == threadIdx.x)
-            while (cub::ThreadLoad<cub::LOAD_CG>(&sched.done[1]) < 1); // { __threadfence_block(); }
+            while (cub::ThreadLoad<cub::LOAD_CG>(&sched.done[2]) < 1); // { __threadfence_block(); }
 
           __syncthreads();
 
