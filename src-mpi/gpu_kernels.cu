@@ -911,10 +911,10 @@ void exchangeDataForceGpu_KI(
     natoms_buf_sendM, natoms_buf_sendP, natoms_buf_recvM, natoms_buf_recvP,
     grid0, grid1, n_scheds++, descs);
 
-#if 0
-  cudaCheckError();
+#if 1
 
   cudaDeviceSynchronize();
+  cudaCheckError();
 
   CUDA_GET_LAST_ERROR
 #endif
