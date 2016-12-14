@@ -727,7 +727,7 @@ int comm_prepare_wait_all(int count, comm_request_t *creqs)
 
     mp_request_t *req = (mp_request_t*)creqs;
     for (int i=0; i < count; ++i) {
-        if(comm_rank == 0)
+        if(comm_rank == -1)
             printf("Set wait descs (last_descs=%d), curr_dreqs->n_wait=%d, count=%d\n", 
                 last_descs, curr_dreqs->n_wait, count);
 
