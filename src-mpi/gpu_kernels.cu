@@ -826,7 +826,7 @@ void exchangeDataForceGpu_KI(
   SimFlat *s, 
   int *natoms_buf_sendM, int *natoms_buf_sendP, int *natoms_buf_recvM, int *natoms_buf_recvP,
   int *partial_sums_sendM, int *partial_sums_sendP, int *partial_sums_recvM, int *partial_sums_recvP,
-  cudaStream_t stream, int iAxis)
+  cudaStream_t stream, int iAxis, int rankM, int rankP)
 {
 
   scanCells(natoms_buf_sendM, nCellsM, sendCellListM, s->gpu.boxes.nAtoms, partial_sums_sendM, stream);
@@ -849,15 +849,17 @@ void exchangeDataForceGpu_KI(
 
   comm_dev_descs_t descs = get_start_descs_req();
   descs = descs + iAxis;
-
-
+  int typeSend = 0;
+  if(rankM == rankP)
+    typeSend = 1;
+  
   exchangeData_Force_KI<<<(grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
     sendBufM, sendBufP, recvBufM, recvBufP, 
     nCellsM, nCellsP, 
     sendCellListM, sendCellListP, recvCellListM, recvCellListP,
     s->gpu, 
     natoms_buf_sendM, natoms_buf_sendP, natoms_buf_recvM, natoms_buf_recvP,
-    grid0, grid1, n_scheds++, descs);
+    grid0, grid1, n_scheds++, descs, typeSend);
 
 #if 0
   cudaCheckError();
@@ -866,7 +868,7 @@ void exchangeDataForceGpu_KI(
 
   CUDA_GET_LAST_ERROR
 #endif
-  
+
 #if 0
   //LOCAL
   if(type == 1)

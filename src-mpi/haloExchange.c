@@ -1229,12 +1229,6 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
    int nCellsP = parms->nCells[faceP];
    int* cellListGpuP = parms->sendCellsGpu[faceP];
-#if 0 
-    if(getMyRank() == 0)
-      printf("\n\n**** FORCE iAxis: %d, nbrRankM: %d, nbrRankP: %d, faceM: %d, faceP: %d****\n", 
-         iAxis, nbrRankM, nbrRankP,faceM, faceP);
-#endif
-
    
    if(getMyRank() ==  nbrRankM)
    {
@@ -1281,7 +1275,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
         sim, 
         parms->natoms_buf_send[faceM], parms->natoms_buf_send[faceP], parms->natoms_buf_recv[faceM], parms->natoms_buf_recv[faceP],
         parms->partial_sums_send[faceM], parms->partial_sums_send[faceP], parms->partial_sums_recv[faceM], parms->partial_sums_recv[faceP],
-        sim->boundary_stream, iAxis);
+        sim->boundary_stream, iAxis, nbrRankM, nbrRankP);
 
 #if 0
       if((getMyRank() == 0))

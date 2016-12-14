@@ -190,7 +190,7 @@ __global__ void exchangeData_Force_KI(
   int *sendCellListM, int *sendCellListP, int *recvCellListM, int *recvCellListP,
   SimGpu sGpu, 
   int *natoms_buf_sendM, int *natoms_buf_sendP, int *natoms_buf_recvM, int *natoms_buf_recvP,
-  int grid0, int grid1, int sched_id, struct comm_dev_descs *pdescs)
+  int grid0, int grid1, int sched_id, struct comm_dev_descs *pdescs, int typeSend)
 {
   assert(sched_id >= 0 && sched_id < TOT_SCHEDS);
   assert(gridDim.x >= grid0+grid1+1);
@@ -232,10 +232,11 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1) 
       {
-        if (threadIdx.x == 1) { //< pdescs->n_tx) {
-          //printf("TX sched_id=%d, block=%d blockIdx.x=%d threadIdx.x=%d, pdescs->n_tx=%d\n", sched_id, block, blockIdx.x, threadIdx.x, pdescs->n_tx);
+        if(
+          (typeSend == 0 && threadIdx.x < pdescs->n_tx) ||
+          (typeSend == 1 && threadIdx.x == (pdescs->n_tx-1))
+        )
           mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
-        }
       }
     }
     else 
