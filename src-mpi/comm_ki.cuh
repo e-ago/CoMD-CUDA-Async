@@ -233,6 +233,7 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
+/*
         //Why this is not working and the P buffer is working?
         int tid_local = threadIdx.x;
         while(1)
@@ -241,6 +242,7 @@ __global__ void exchangeData_Force_KI(
           tid_local += blockDim.x;
           if(tid_local >= sendSizeM) break;
         }
+*/
         __syncthreads();
 
         if(threadIdx.x == 0)
@@ -261,6 +263,7 @@ __global__ void exchangeData_Force_KI(
 
         if (last_block == grid0-1)
         {
+
           int tid_local = threadIdx.x;
           while(1)
           {
