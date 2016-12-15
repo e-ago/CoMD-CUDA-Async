@@ -229,7 +229,7 @@ __global__ void exchangeData_Force_KI(
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
       if (0 == threadIdx.x)
-          __threadfence_block();
+          __threadfence();
 
       if (last_block == grid0-1)
       {
@@ -265,7 +265,7 @@ __global__ void exchangeData_Force_KI(
         // elect last block to wait
         int last_block = elect_one(sched, grid0, 1); //__syncthreads(); inside
         if (0 == threadIdx.x)
-            __threadfence_block();
+            __threadfence();
 
         if (last_block == grid0-1)
         {
