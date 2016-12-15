@@ -266,7 +266,8 @@ __global__ void exchangeData_Force_KI(
         if (last_block == grid0-1)
         {
            if (0 == threadIdx.x)
-            printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
+            printf("lastblockP: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", 
+              last_block, grid0, blockIdx.x, blockDim.x);
 
           int tid_local = threadIdx.x;
           while(1)
