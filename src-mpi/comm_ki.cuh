@@ -228,14 +228,15 @@ __global__ void exchangeData_Force_KI(
 
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
-      //if (0 == threadIdx.x)
-      //    __threadfence();
+      if (0 == threadIdx.x)
+          __threadfence();
 
       if (last_block == grid0-1)
       {
         if (0 == threadIdx.x)
           printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
-        __threadfence_system();
+
+
         //Why this is not working and the P buffer is working?
         int tid_local = threadIdx.x;
         while(1)
@@ -261,14 +262,14 @@ __global__ void exchangeData_Force_KI(
 
         // elect last block to wait
         int last_block = elect_one(sched, grid0, 1); //__syncthreads(); inside
-       // if (0 == threadIdx.x)
-       //     __threadfence();
+        if (0 == threadIdx.x)
+            __threadfence();
 
         if (last_block == grid0-1)
         {
            if (0 == threadIdx.x)
             printf("lastblockP: %d, grid0: %d, blockIdx: %d blockDimx:%d\n",  last_block, grid0, blockIdx.x, blockDim.x);
-          __threadfence_system();
+
           int tid_local = threadIdx.x;
           while(1)
           {
