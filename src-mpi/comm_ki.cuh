@@ -233,7 +233,7 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-  
+        //Why this is not working and the P buffer is working?
         int tid_local = threadIdx.x;
         while(1)
         {
@@ -290,9 +290,7 @@ __global__ void exchangeData_Force_KI(
           UnloadForceBuffer_KI((ForceMsg*)recvBufM, nCellsM, recvCellListM, sGpu, natoms_buf_recvM, block, grid1);
         }
       }
-
     }
-
   }
 }
 

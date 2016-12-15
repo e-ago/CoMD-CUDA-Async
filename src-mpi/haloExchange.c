@@ -1366,12 +1366,13 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
    int nbrRankM = haloExchange->nbrRank[faceM];
    int nbrRankP = haloExchange->nbrRank[faceP];
 
-   char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
+   char * sendBufM, * sendBufP, * sendBufM_d, * sendBufP_d, * recvBufP, * recvBufM;
    sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];
    sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];
+   sendBufM_d = (char*)haloExchange->d_sendBufM_Async[iAxis];
+   sendBufP_d = (char*)haloExchange->d_sendBufP_Async[iAxis];
    recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
    recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
-   
    int typeM=0, typeP=0;
 
    if((getMyRank() == nbrRankM))
@@ -1437,7 +1438,7 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 
       exchangeDataForceGpu_KI(
         sendBufM, sendBufP,
-        haloExchange->d_sendBufM_Async[iAxis], haloExchange->d_sendBufP_Async[iAxis], 
+        sendBufM_d, sendBufP_d, 
         sendSizeM[iAxis], sendSizeP[iAxis],
         recvBufM, recvBufP,
         nCellsM, nCellsP, 
