@@ -185,8 +185,8 @@ __device__ void UnloadForceBuffer_KI(
       */
 
 __global__ void exchangeData_Force_KI(
-  char *sendBufM_h, char *sendBufP_h,
-  char *sendBufM_d, char *sendBufP_d,
+  volatile char *sendBufM_h, volatile char *sendBufP_h,
+  volatile char *sendBufM_d, volatile char *sendBufP_d,
   int sendSizeM, int sendSizeP,
   char *recvBufM, char *recvBufP, 
   int nCellsM, int nCellsP, 
@@ -233,8 +233,8 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
-//        if (0 == threadIdx.x)
-//          printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
+        if (0 == threadIdx.x)
+          printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
         __threadfence_system();
         //Why this is not working and the P buffer is working?
         int tid_local = threadIdx.x;
@@ -266,8 +266,8 @@ __global__ void exchangeData_Force_KI(
 
         if (last_block == grid0-1)
         {
-//           if (0 == threadIdx.x)
-//            printf("lastblockP: %d, grid0: %d, blockIdx: %d blockDimx:%d\n",  last_block, grid0, blockIdx.x, blockDim.x);
+           if (0 == threadIdx.x)
+            printf("lastblockP: %d, grid0: %d, blockIdx: %d blockDimx:%d\n",  last_block, grid0, blockIdx.x, blockDim.x);
           __threadfence_system();
           int tid_local = threadIdx.x;
           while(1)
