@@ -224,7 +224,7 @@ __global__ void exchangeData_Force_KI(
     block--;
     if (block < grid0)
     {
-      LoadForceBuffer_KI((ForceMsg*)sendBufM_d, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
+      LoadForceBuffer_KI((ForceMsg*)sendBufM_h, nCellsM, sendCellListM, sGpu, natoms_buf_sendM, block, grid0);
 
       // elect last block to wait
       int last_block = elect_one(sched, grid0, 0); //__syncthreads(); inside
@@ -233,6 +233,8 @@ __global__ void exchangeData_Force_KI(
 
       if (last_block == grid0-1)
       {
+        if (0 == threadIdx.x)
+          printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
 /*
         //Why this is not working and the P buffer is working?
         int tid_local = threadIdx.x;
@@ -263,6 +265,8 @@ __global__ void exchangeData_Force_KI(
 
         if (last_block == grid0-1)
         {
+           if (0 == threadIdx.x)
+            printf("lastblockM: %d, grid0: %d, blockIdx: %d blockDimx:%d\n", last_block, grid0, blockIdx.x, blockDim.x);
 
           int tid_local = threadIdx.x;
           while(1)
