@@ -762,6 +762,11 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   return nBuf;
 }
 
+//GPU-Init
+
+#define TOT_SCHEDS 128
+static int n_scheds = TOT_SCHEDS;
+
 #if 1
 extern "C"
 int loadAtomsBufferFromGpu_KI(
@@ -862,10 +867,6 @@ void unloadForceBufferToGpu_Async(char *buf, int bufSize, int nCells, int *cellL
   
 }
 
-//GPU-Init
-
-#define TOT_SCHEDS 128
-static int n_scheds = TOT_SCHEDS;
 
 extern "C"
 void exchangeDataForceGpu_KI(
