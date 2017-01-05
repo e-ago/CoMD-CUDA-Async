@@ -767,7 +767,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
 #define TOT_SCHEDS 128
 static int n_scheds = TOT_SCHEDS;
 
-#if 1
+#if 0
 extern "C"
 int loadAtomsBufferFromGpu_KI(
                           char * sendBufM, int * sendSizeM, int nCellsM,
