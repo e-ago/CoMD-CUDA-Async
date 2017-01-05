@@ -741,6 +741,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
   int block = THREAD_ATOM_CTA;
 
+  printf("grid: %d, nBuf: %d, block: %d\n", grid, nBuf, block);
   vec_t r,p;
   int *type = gid + nBuf;
   r.x = (real_t*)(type + nBuf);
@@ -755,6 +756,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   int *d_boxId = sim->tmp_sort;
 
   computeOffsets(nlUpdateRequired, sim, r, d_iOffset, d_boxId, nBuf, stream);
+  cudaCheckError();
   // map received particles to cells
   UnloadAtomsBufferPacked<<<grid, block, 0, stream>>>(r, p, type, gid, nBuf, sim->gpu.atoms, d_iOffset);
   //CUDA_GET_LAST_ERROR
