@@ -886,6 +886,8 @@ void exchangeData_Atom_Async(
                                  parms->cellListGpu[faceP], sim->gpu, parms->d_natoms_buf, 
                                  parms->d_partial_sums, shiftP, sim->boundary_stream, typeM);
 
+      printf("sizeMsgP[%d]: %d\n", iAxis, sizeMsgP[iAxis]);
+
       #if 0
       cudaDeviceSynchronize();
       if(getMyRank() == 0)
@@ -906,6 +908,7 @@ void exchangeData_Atom_Async(
                                  parms->cellListGpu[faceM], sim->gpu, parms->d_natoms_buf, 
                                  parms->d_partial_sums, shiftM, sim->boundary_stream, typeM);
 
+      printf("sizeMsgM[%d]: %d\n", iAxis, sizeMsgM[iAxis]);
       comm_isend_on_stream(sendBufM, 
                            (sizeMsgM[iAxis] * sizeof(AtomMsg)),
                            MPI_CHAR,
