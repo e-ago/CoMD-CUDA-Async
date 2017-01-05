@@ -762,7 +762,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   return nBuf;
 }
 
-#if 0
+#if 1
 extern "C"
 int loadAtomsBufferFromGpu_KI(
                           char * sendBufM, int * sendSizeM, int nCellsM,

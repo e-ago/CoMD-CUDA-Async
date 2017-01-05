@@ -559,7 +559,7 @@ void haloExchange(HaloExchange* haloExchange, void* data)
       
       MPI_Barrier(MPI_COMM_WORLD);
       //That's for communication timers comparison!
-      cudaDeviceSynchronize();
+      //cudaDeviceSynchronize();
       startTimer(commHaloTimer);
 #if 0
       if(
@@ -585,7 +585,7 @@ void haloExchange(HaloExchange* haloExchange, void* data)
           exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis),
                                  send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);      
       //That's for communication timers comparison!
-      cudaDeviceSynchronize();
+      //cudaDeviceSynchronize();
       stopTimer(commHaloTimer);
    }
    else
@@ -682,7 +682,7 @@ void haloExchange(HaloExchange* haloExchange, void* data)
       MPI_Barrier(MPI_COMM_WORLD);
    
       //That's for communication timers comparison!
-      cudaDeviceSynchronize();
+      //cudaDeviceSynchronize();
       startTimer(commHaloTimer);
 
       for (int iAxis=0; iAxis<3; ++iAxis)
@@ -713,7 +713,7 @@ void haloExchange(HaloExchange* haloExchange, void* data)
       }
 #endif
       //That's for communication timers comparison!
-      cudaDeviceSynchronize();
+      //cudaDeviceSynchronize();
       stopTimer(commHaloTimer);
       comm_progress();
    }

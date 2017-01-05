@@ -405,4 +405,94 @@ __global__ void localData_Force_KI(
 }
 #endif
 
+
+__device__ void LoadAtomsBufferPacked_KI(AtomMsgSoA compactAtoms, int *cellIDs, SimGpu sim_gpu, int *cellOffset, real_t shift_x, real_t shift_y, real_t shift_z)
+{
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+  int iCell, iAtom, ii, iBox, iBuf;
+
+  iCell = tid / MAXATOMS;
+  iAtom = tid % MAXATOMS;
+  assert(iCell < sim_gpu.boxes.nLocalBoxes + 1 && iCell >= 0);
+
+  iBox = cellIDs[iCell];
+  ii = iBox * MAXATOMS + iAtom;
+
+  if (iAtom < sim_gpu.boxes.nAtoms[iBox]) 
+  {
+    iBuf = cellOffset[iCell] + iAtom;
+
+    // coalescing writes: structure of arrays
+    compactAtoms.gid[iBuf] = sim_gpu.atoms.gid[ii];
+    compactAtoms.type[iBuf] = sim_gpu.atoms.iSpecies[ii];
+    compactAtoms.rx[iBuf] = sim_gpu.atoms.r.x[ii] + shift_x;
+    compactAtoms.ry[iBuf] = sim_gpu.atoms.r.y[ii] + shift_y;
+    compactAtoms.rz[iBuf] = sim_gpu.atoms.r.z[ii] + shift_z;
+    compactAtoms.px[iBuf] = sim_gpu.atoms.p.x[ii];
+    compactAtoms.py[iBuf] = sim_gpu.atoms.p.y[ii];
+    compactAtoms.pz[iBuf] = sim_gpu.atoms.p.z[ii];
+  }
+}
+
+__global__ void exchangeData_Atoms_KI(
+    AtomMsgSoA compactAtomsM, AtomMsgSoA compactAtomsP, 
+    int *d_cellListM, int *d_cellListP,
+    int* d_cellOffsetsM, int* d_cellOffsetsP,
+    real_t shiftM_x, real_t shiftM_y, real_t shiftM_z,
+    real_t shiftP_x, real_t shiftP_y, real_t shiftP_z,
+    int gridM, int gridP, SimGpu sim_gpu, int sched_id, struct comm_dev_descs *pdescs)
+{
+  assert(sched_id >= 0 && sched_id < TOT_SCHEDS);
+  assert(gridDim.x >= gridM+gridP+1);
+
+  sched_info_t &sched = scheds[sched_id];
+  int block = elect_block(sched);
+  
+  //First block wait
+  if(block == 0)
+  {
+    assert(blockDim.x >= pdescs->n_wait);
+    
+    if (threadIdx.x < pdescs->n_wait) {
+      //printf("WAIT sched_id=%d, block=%d blockIdx.x=%d threadIdx.x=%d, pdescs->n_wait=%d\n", sched_id, block, blockIdx.x, threadIdx.x, pdescs->n_wait);
+      mp::device::mlx5::wait(pdescs->wait[threadIdx.x]);
+      mp::device::mlx5::signal(pdescs->wait[threadIdx.x]);
+    }
+    
+    __syncthreads();
+  }
+  else
+  {
+    block--;
+    if (block < gridM)
+    {
+      LoadAtomsBufferPacked_KI(compactAtomsM, d_cellListM, sim_gpu, d_cellOffsetsM, shiftM_x, shiftM_y, shiftM_z);
+
+      // elect last block to wait
+      int last_block = elect_one(sched, gridM, 0); //__syncthreads(); inside
+      if (0 == threadIdx.x)
+          __threadfence();
+
+      if (last_block == gridM-1 && threadIdx.x == 0)
+          mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+    }
+    else
+    {
+      block -= gridM;
+      if (block < gridP)
+      {
+        LoadAtomsBufferPacked_KI(compactAtomsP, d_cellListP, sim_gpu, d_cellOffsetsP, shiftP_x, shiftP_y, shiftP_z);
+
+        // elect last block to wait
+        int last_block = elect_one(sched, gridP, 1); //__syncthreads(); inside
+        if (0 == threadIdx.x)
+            __threadfence();
+
+        if (last_block == gridP-1 && threadIdx.x == 1)
+            mp::device::mlx5::send(pdescs->tx[threadIdx.x]);
+      }
+    }
+  }
+}
+
 #endif
