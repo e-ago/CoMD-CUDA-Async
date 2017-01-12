@@ -1,0 +1,212 @@
++ local A=0
++ local B=0
++ local C=1
++ local D=1
++ local NP=16
++ shift 5
++ local 'PAR=-e -i 16 -j 1 -k 1 -x 80 -y 80 -z 80'
++ date
+gio 12 gen 2017, 14.37.23, GMT
++ tee -a run.log
++ echo
+
++ echo
+
++ mpirun -x ASYNC_USE_ASYNC=0 -x ASYNC_ENABLE_DEBUG=0 -x COMM_USE_COMM=0 -x COMM_USE_ASYNC=0 -x COMM_USE_GPU_COMM=0 -x MP_ENABLE_DEBUG=0 -x GDS_ENABLE_DEBUG=0 -x ENABLE_DEBUG_MSG=0 -x MLX5_DEBUG_MASK=0 -x MLX5_FREEZE_ON_ERROR_CQE=0 -x MP_DBREC_ON_GPU=0 -x MP_RX_CQ_ON_GPU=0 -x MP_TX_CQ_ON_GPU=0 -x MP_EVENT_ASYNC=0 -x MP_GUARD_PROGRESS=0 -x GDS_DISABLE_WRITE64=0 -x GDS_SIMULATE_WRITE64=0 -x GDS_DISABLE_INLINECOPY=0 -x GDS_ENABLE_WEAK_CONSISTENCY=1 -x GDS_DISABLE_MEMBAR=1 -x CUDA_VISIBLE_DEVICES=0 -x CUDA_DISABLE_UNIFIED_MEMORY=0 --mca btl_openib_want_cuda_gdr 1 --map-by node -np 16 -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi -e -i 16 -j 1 -k 1 -x 80 -y 80 -z 80
+[tesla78:35425] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla76:40246] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla80:40108] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla81:35289] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla77:47047] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla82:21998] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla79:37066] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla83:38440] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla75:23749] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla74:46777] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla73:26235] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla69:32265] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla72:05422] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla70:34674] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla71:08024] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla68:35520] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+Thu Jan 12 14:37:32 2017: Starting Initialization
+
+
+Mini-Application Name    : CoMD-cuda-mpi
+Mini-Application Version : 1.1
+Platform:
+  hostname: tesla70
+  kernel name: 'Linux'
+  kernel release: '3.10.0-327.36.3.el7.x86_64'
+  processor: 'x86_64'
+Build:
+  CC: '/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/bin/mpicc'
+  compiler version: 'gcc (GCC) 5.3.0'
+  CFLAGS: '-std=c99 -Wno-unused-result -DMAXATOMS=64  -DNDEBUG -g -O5 -DCOMD_DOUBLE -DDO_MPI  -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi -I/usr/local/Cluster-Apps/cuda/8.0/include'
+  LDFLAGS: '-L/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib -lmpi -lm -lstdc++ -L/usr/local/Cluster-Apps/cuda/8.0/lib64 -lcudart'
+  using MPI: true
+  Threading: none
+  Double Precision: true
+Run Date/Time: 2017-01-12, 14:37:32
+
+Command Line Parameters:
+  doeam: 1
+  potDir: pots
+  potName: Cu_u6.eam
+  potType: funcfl
+  nx: 80
+  ny: 80
+  nz: 80
+  xproc: 16
+  yproc: 1
+  zproc: 1
+  Lattice constant: -1 Angstroms
+  nSteps: 100
+  printRate: 10
+  Time step: 1 fs
+  Initial Temperature: 600 K
+  Initial Delta: 0 Angstroms
+
+  GPU async opt: 0
+  GPU profiling mode: 0
+  GPU method: thread_atom
+  Space-filling (Hilbert): 0
+
+Host tesla68 using GPU 0: Tesla K20c
+
+Host tesla80 using GPU 0: Tesla K20c
+
+Host tesla69 using GPU 0: Tesla K20c
+
+Host tesla73 using GPU 0: Tesla K20c
+
+Host tesla77 using GPU 0: Tesla K20c
+
+Host tesla76 using GPU 0: Tesla K20c
+
+Host tesla71 using GPU 0: Tesla K20c
+
+Host tesla81 using GPU 0: Tesla K20c
+
+Host tesla83 using GPU 0: Tesla K20c
+
+Host tesla72 using GPU 0: Tesla K20c
+
+Host tesla75 using GPU 0: Tesla K20c
+
+Host tesla79 using GPU 0: Tesla K20c
+
+Host tesla70 using GPU 0: Tesla K20c
+
+Host tesla74 using GPU 0: Tesla K20c
+
+Host tesla82 using GPU 0: Tesla K20c
+
+Host tesla78 using GPU 0: Tesla K20c
+
+Simulation data: 
+  Total atoms        : 2048000
+  Min global bounds  : [   0.0000000000,   0.0000000000,   0.0000000000 ]
+  Max global bounds  : [ 289.2000000000, 289.2000000000, 289.2000000000 ]
+
+Decomposition data: 
+  Processors         :     16,     1,     1
+  Local boxes        :      3,    58,    58 =    10092
+  Box size           : [   6.0250000000,   4.9862068966,   4.9862068966 ]
+  Box factor         : [   1.2171717172,   1.0073145246,   1.0073145246 ] 
+  Max Link Cell Occupancy: 18 of 64
+
+Potential data: 
+  Potential type  : EAM
+  Species name    : Cu
+  Atomic number   : 29
+  Mass            : 63.55 amu
+  Lattice type    : FCC
+  Lattice spacing : 3.615 Angstroms
+  Cutoff          : 4.95 Angstroms
+
+Memory data: 
+  Intrinsic atom footprint =   88 B/atom 
+  Total atom footprint     = 171.875 MB ( 10.74 MB/node)
+  Link cell atom footprint =  54.205 MB/node
+  Link cell atom footprint =  96.680 MB/node (including halo cell data
+
+
+Initial energy : 0.000000000000, atom count : 2048000 
+
+Thu Jan 12 14:37:32 2017: Initialization Finished
+
+Thu Jan 12 14:37:32 2017: Starting simulation
+
+#                                                                                         Performance
+#  Loop   Time(fs)       Total Energy   Potential Energy     Kinetic Energy  Temperature   (us/atom)     # Atoms
+      0       0.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0000      2048000
+     10      10.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0162      2048000
+     20      20.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0164      2048000
+     30      30.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0160      2048000
+     40      40.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0159      2048000
+     50      50.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0157      2048000
+     60      60.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0159      2048000
+     70      70.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0156      2048000
+     80      80.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0157      2048000
+     90      90.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0155      2048000
+    100     100.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0158      2048000
+Thu Jan 12 14:37:32 2017: Ending simulation
+
+
+
+Simulation Validation:
+  Initial energy  : 0.000000000000
+  Final energy    : 0.000000000000
+  eFinal/eInitial : -nan
+  Final atom count : 2048000, no atoms lost
+
+
+Timings for Rank 0
+        Timer        # Calls    Avg/Call (s)   Total (s)    % Loop
+___________________________________________________________________
+total                      1       0.6799        0.6799      333.44
+loop                       1       0.2039        0.2039      100.00
+timestep                  10       0.0203        0.2033       99.70
+  position               100       0.0000        0.0001        0.03
+  velocity               200       0.0000        0.0002        0.08
+  redistribute           101       0.0013        0.1316       64.55
+    atomHalo             101       0.0008        0.0855       41.92
+  force                  101       0.0008        0.0759       37.22
+    eamHalo              101       0.0007        0.0755       37.04
+commHalo                 606       0.0001        0.0800       39.23
+commReduce                39       0.0010        0.0401       19.68
+
+Timing Statistics Across 16 Ranks:
+        Timer        Rank: Min(s)       Rank: Max(s)      Avg(s)    Stdev(s)
+_____________________________________________________________________________
+total                3:    0.6799       8:    0.6927      0.6863      0.0064
+loop                10:    0.2037       1:    0.2039      0.2038      0.0001
+timestep            14:    0.2030       1:    0.2034      0.2032      0.0001
+  position           4:    0.0001       6:    0.0001      0.0001      0.0000
+  velocity          14:    0.0001       4:    0.0002      0.0002      0.0000
+  redistribute       7:    0.1164       0:    0.1316      0.1233      0.0040
+    atomHalo         7:    0.0673       0:    0.0855      0.0753      0.0047
+  force              6:    0.0716       3:    0.0820      0.0772      0.0032
+    eamHalo          6:    0.0713       3:    0.0816      0.0769      0.0032
+commHalo             7:    0.0380       0:    0.0800      0.0551      0.0168
+commReduce          14:    0.0116       0:    0.0401      0.0208      0.0077
+
+---------------------------------------------------
+ Average atom update rate:       0.02 us/atom/task
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average all atom update rate:   0.00 us/atom
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average atom rate:            1007.78 atoms/us
+---------------------------------------------------
+
+Thu Jan 12 14:37:32 2017: CoMD Ending
+
++ date
+gio 12 gen 2017, 14.37.32, GMT

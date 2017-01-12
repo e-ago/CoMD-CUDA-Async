@@ -1,0 +1,116 @@
++ local A=0
++ local B=0
++ local C=1
++ local D=1
++ local NP=8
++ shift 5
++ local 'PAR=-e -i 8 -j 1 -k 1 -x 80 -y 80 -z 80'
++ date
+gio 12 gen 2017, 14.36.36, GMT
++ tee -a run.log
++ echo
+
++ echo
+
++ mpirun -x ASYNC_USE_ASYNC=0 -x ASYNC_ENABLE_DEBUG=0 -x COMM_USE_COMM=0 -x COMM_USE_ASYNC=0 -x COMM_USE_GPU_COMM=0 -x MP_ENABLE_DEBUG=0 -x GDS_ENABLE_DEBUG=0 -x ENABLE_DEBUG_MSG=0 -x MLX5_DEBUG_MASK=0 -x MLX5_FREEZE_ON_ERROR_CQE=0 -x MP_DBREC_ON_GPU=0 -x MP_RX_CQ_ON_GPU=0 -x MP_TX_CQ_ON_GPU=0 -x MP_EVENT_ASYNC=0 -x MP_GUARD_PROGRESS=0 -x GDS_DISABLE_WRITE64=0 -x GDS_SIMULATE_WRITE64=0 -x GDS_DISABLE_INLINECOPY=0 -x GDS_ENABLE_WEAK_CONSISTENCY=1 -x GDS_DISABLE_MEMBAR=1 -x CUDA_VISIBLE_DEVICES=0 -x CUDA_DISABLE_UNIFIED_MEMORY=0 --mca btl_openib_want_cuda_gdr 1 --map-by node -np 8 -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi -e -i 8 -j 1 -k 1 -x 80 -y 80 -z 80
+[tesla68:35333] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla72:05035] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla70:34216] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla73:25816] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla74:46350] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla75:23310] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla71:07577] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla69:31862] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+Thu Jan 12 14:36:36 2017: Starting Initialization
+
+
+Mini-Application Name    : CoMD-cuda-mpi
+Mini-Application Version : 1.1
+Platform:
+  hostname: tesla70
+  kernel name: 'Linux'
+  kernel release: '3.10.0-327.36.3.el7.x86_64'
+  processor: 'x86_64'
+Build:
+  CC: '/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/bin/mpicc'
+  compiler version: 'gcc (GCC) 5.3.0'
+  CFLAGS: '-std=c99 -Wno-unused-result -DMAXATOMS=64  -DNDEBUG -g -O5 -DCOMD_DOUBLE -DDO_MPI  -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi -I/usr/local/Cluster-Apps/cuda/8.0/include'
+  LDFLAGS: '-L/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib -lmpi -lm -lstdc++ -L/usr/local/Cluster-Apps/cuda/8.0/lib64 -lcudart'
+  using MPI: true
+  Threading: none
+  Double Precision: true
+Run Date/Time: 2017-01-12, 14:36:36
+
+Command Line Parameters:
+  doeam: 1
+  potDir: pots
+  potName: Cu_u6.eam
+  potType: funcfl
+  nx: 80
+  ny: 80
+  nz: 80
+  xproc: 8
+  yproc: 1
+  zproc: 1
+  Lattice constant: -1 Angstroms
+  nSteps: 100
+  printRate: 10
+  Time step: 1 fs
+  Initial Temperature: 600 K
+  Initial Delta: 0 Angstroms
+
+  GPU async opt: 0
+  GPU profiling mode: 0
+  GPU method: thread_atom
+  Space-filling (Hilbert): 0
+
+Host tesla68 using GPU 0: Tesla K20c
+
+Host tesla70 using GPU 0: Tesla K20c
+
+Host tesla75 using GPU 0: Tesla K20c
+
+Host tesla69 using GPU 0: Tesla K20c
+
+Host tesla71 using GPU 0: Tesla K20c
+
+Host tesla73 using GPU 0: Tesla K20c
+
+Host tesla74 using GPU 0: Tesla K20c
+
+Host tesla72 using GPU 0: Tesla K20c
+
+[tesla68:35333] *** Process received signal ***
+[tesla68:35333] Signal: Segmentation fault (11)
+[tesla68:35333] Signal code: Invalid permissions (2)
+[tesla68:35333] Failing at address: 0x7f376bd55ff0
+[tesla68:35333] [ 0] /lib64/libpthread.so.0(+0xf100)[0x7f3778c34100]
+[tesla68:35333] [ 1] /lib64/libc.so.6(+0x14e92e)[0x7f37789b192e]
+[tesla68:35333] [ 2] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/libopen-pal.so.13(opal_convertor_pack+0x196)[0x7f377833f866]
+[tesla68:35333] [ 3] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_btl_openib.so(mca_btl_openib_prepare_src+0xd7)[0x7f377319a4f7]
+[tesla68:35333] [ 4] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_pml_ob1.so(mca_pml_ob1_send_request_schedule_once+0x1ef)[0x7f3771aa970f]
+[tesla68:35333] [ 5] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_pml_ob1.so(+0x14676)[0x7f3771aaa676]
+[tesla68:35333] [ 6] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_pml_ob1.so(+0x16295)[0x7f3771aac295]
+[tesla68:35333] [ 7] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_btl_openib.so(+0x1340f)[0x7f37731a040f]
+[tesla68:35333] [ 8] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_btl_openib.so(+0x1379c)[0x7f37731a079c]
+[tesla68:35333] [ 9] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/libopen-pal.so.13(opal_progress+0x2a)[0x7f3778332e9a]
+[tesla68:35333] [10] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_pml_ob1.so(+0xa045)[0x7f3771aa0045]
+[tesla68:35333] [11] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_pml_ob1.so(mca_pml_ob1_send+0x237)[0x7f3771aa0f67]
+[tesla68:35333] [12] /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/libmpi.so.12(MPI_Sendrecv+0x21a)[0x7f37797ae83a]
+[tesla68:35333] [13] /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi[0x41465d]
+[tesla68:35333] [14] /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi[0x40a836]
+[tesla68:35333] [15] /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi[0x412ff3]
+[tesla68:35333] [16] /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi[0x4028d5]
+[tesla68:35333] [17] /lib64/libc.so.6(__libc_start_main+0xf5)[0x7f3778884b15]
+[tesla68:35333] [18] /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi[0x403b11]
+[tesla68:35333] *** End of error message ***
+[tesla73:25816] *** An error occurred in MPI_Sendrecv
+[tesla73:25816] *** reported by process [1849622529,5]
+[tesla73:25816] *** on communicator MPI_COMM_WORLD
+[tesla73:25816] *** MPI_ERR_TRUNCATE: message truncated
+[tesla73:25816] *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+[tesla73:25816] ***    and potentially your MPI job)
+[tesla68:35296] 5 more processes have sent help message help-mpi-errors.txt / mpi_errors_are_fatal
+[tesla68:35296] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
++ date
+gio 12 gen 2017, 14.36.37, GMT
