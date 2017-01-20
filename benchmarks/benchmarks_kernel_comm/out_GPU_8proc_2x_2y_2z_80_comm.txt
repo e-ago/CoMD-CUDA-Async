@@ -1,0 +1,261 @@
++ local A=0
++ local B=0
++ local C=1
++ local D=1
++ local NP=8
++ shift 5
++ local 'PAR=-e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80'
++ date
+gio  5 gen 2017, 15.45.48, GMT
++ tee -a run.log
++ echo
+
++ echo
+
++ mpirun -x ASYNC_USE_ASYNC=0 -x ASYNC_ENABLE_DEBUG=0 -x COMM_USE_COMM=1 -x COMM_USE_ASYNC=1 -x COMM_USE_GPU_COMM=1 -x MP_ENABLE_DEBUG=0 -x GDS_ENABLE_DEBUG=0 -x ENABLE_DEBUG_MSG=0 -x MLX5_DEBUG_MASK=0 -x MLX5_FREEZE_ON_ERROR_CQE=0 -x MP_DBREC_ON_GPU=0 -x MP_RX_CQ_ON_GPU=0 -x MP_TX_CQ_ON_GPU=0 -x MP_EVENT_ASYNC=0 -x MP_GUARD_PROGRESS=1 -x GDS_DISABLE_WRITE64=1 -x GDS_SIMULATE_WRITE64=0 -x GDS_DISABLE_INLINECOPY=0 -x GDS_ENABLE_WEAK_CONSISTENCY=1 -x GDS_DISABLE_MEMBAR=1 -x CUDA_VISIBLE_DEVICES=0 -x CUDA_DISABLE_UNIFIED_MEMORY=0 --mca btl_openib_want_cuda_gdr 1 --map-by node -np 8 -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+# tesla70: picking GPU:0/ CPU: HCA:
+[tesla70:19920] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla74:29728] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla71:36373] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla73:07066] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla75:03113] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla76:20486] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla77:28103] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla72:35380] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[19920] [0] MP WARN mp_init() GUARD_PROGRESS enabled
+[35380] [2] MP WARN mp_init() GUARD_PROGRESS enabled
+[29728] [4] MP WARN mp_init() GUARD_PROGRESS enabled
+[7066] [3] MP WARN mp_init() GUARD_PROGRESS enabled
+[20486] [6] MP WARN mp_init() GUARD_PROGRESS enabled
+[36373] [1] MP WARN mp_init() GUARD_PROGRESS enabled
+[3113] [5] MP WARN mp_init() GUARD_PROGRESS enabled
+[28103] [7] MP WARN mp_init() GUARD_PROGRESS enabled
+Thu Jan  5 15:45:49 2017: Starting Initialization
+
+
+Mini-Application Name    : CoMD-cuda-mpi
+Mini-Application Version : 1.1
+Platform:
+  hostname: tesla70
+  kernel name: 'Linux'
+  kernel release: '3.10.0-327.36.3.el7.x86_64'
+  processor: 'x86_64'
+Build:
+  CC: '/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/bin/mpicc'
+  compiler version: 'gcc (GCC) 5.3.0'
+  CFLAGS: '-std=c++11 -Wno-unused-result -DMAXATOMS=64 -DNDEBUG  -DCOMD_DOUBLE -DDO_MPI -DUSE_ASYNC -I/home/hpcagos1/peersync/include  -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi -I/home/hpcagos1/peersync/include -I/usr/local/Cluster-Apps/cuda/8.0/include -D_NVPROF_NVTX -DUSE_ASYNC'
+  LDFLAGS: ' -L/home/hpcagos1/peersync/lib -lmp -lgdsync -lgdrapi -lcuda -libverbs -lnvToolsExt -lm -lstdc++ -L/usr/local/Cluster-Apps/cuda/8.0/lib64 -lcudart'
+  using MPI: true
+  Threading: none
+  Double Precision: true
+Run Date/Time: 2017-01-05, 15:45:49
+
+Command Line Parameters:
+  doeam: 1
+  potDir: pots
+  potName: Cu_u6.eam
+  potType: funcfl
+  nx: 80
+  ny: 80
+  nz: 80
+  xproc: 2
+  yproc: 2
+  zproc: 2
+  Lattice constant: -1 Angstroms
+  nSteps: 100
+  printRate: 10
+  Time step: 1 fs
+  Initial Temperature: 600 K
+  Initial Delta: 0 Angstroms
+
+  GPU async opt: 0
+  GPU profiling mode: 0
+  GPU method: thread_atom
+  Space-filling (Hilbert): 0
+
+Host tesla73 using GPU 0: Tesla K20c
+
+Host tesla75 using GPU 0: Tesla K20c
+
+Host tesla70 using GPU 0: Tesla K20c
+
+Host tesla77 using GPU 0: Tesla K20c
+
+Host tesla72 using GPU 0: Tesla K20c
+
+Host tesla74 using GPU 0: Tesla K20c
+
+Host tesla71 using GPU 0: Tesla K20c
+
+Host tesla76 using GPU 0: Tesla K20c
+
+[3113] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[7066] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[7066] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[29728] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[3113] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[7066] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[29728] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[3113] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[7066] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[29728] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[3113] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[29728] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[19920] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[36373] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[20486] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[36373] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[19920] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[35380] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[20486] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[36373] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[19920] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[35380] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[20486] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[36373] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[28103] GDS INFO  gds_enable_write64() GDS_DISABLE_WRITE64=1
+[19920] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[35380] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[20486] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[28103] GDS INFO  gds_enable_inlcpy() GDS_DISABLE_INLINECOPY=0
+[35380] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[28103] GDS INFO  gds_simulate_write64() GDS_SIMULATE_WRITE64=0
+[28103] GDS INFO  gds_enable_membar() GDS_DISABLE_MEMBAR=1
+[7066] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[29728] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[3113] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[36373] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[20486] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[19920] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[28103] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+[35380] GDS INFO  gds_cq_map_smart() GDS_CQ_MAP_SMART env 0
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+Alloco n_dreqs=1024 descs
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+WARNING: enabling Comm-based communications
+WARNING: enabling GPU-initiated communications
+Simulation data: 
+  Total atoms        : 2048000
+  Min global bounds  : [   0.0000000000,   0.0000000000,   0.0000000000 ]
+  Max global bounds  : [ 289.2000000000, 289.2000000000, 289.2000000000 ]
+
+Decomposition data: 
+  Processors         :      2,     2,     2
+  Local boxes        :     29,    29,    29 =    24389
+  Box size           : [   4.9862068966,   4.9862068966,   4.9862068966 ]
+  Box factor         : [   1.0073145246,   1.0073145246,   1.0073145246 ] 
+  Max Link Cell Occupancy: 14 of 64
+
+Potential data: 
+  Potential type  : EAM
+  Species name    : Cu
+  Atomic number   : 29
+  Mass            : 63.55 amu
+  Lattice type    : FCC
+  Lattice spacing : 3.615 Angstroms
+  Cutoff          : 4.95 Angstroms
+
+Memory data: 
+  Intrinsic atom footprint =   88 B/atom 
+  Total atom footprint     = 171.875 MB ( 21.48 MB/node)
+  Link cell atom footprint = 130.996 MB/node
+  Link cell atom footprint = 160.010 MB/node (including halo cell data
+
+
+Initial energy : -3.460523233086, atom count : 2048000 
+
+Thu Jan  5 15:45:49 2017: Initialization Finished
+
+Thu Jan  5 15:45:49 2017: Starting simulation
+
+#                                                                                         Performance
+#  Loop   Time(fs)       Total Energy   Potential Energy     Kinetic Energy  Temperature   (us/atom)     # Atoms
+      0       0.00    -3.460523233086    -3.538079224686     0.077555991600     600.0000     0.0000      2048000
+     10      10.00    -3.460522625373    -3.529930590363     0.069407964991     536.9640     0.1250      2048000
+     20      20.00    -3.460524223404    -3.509742801204     0.049218577800     380.7720     0.1248      2048000
+     30      30.00    -3.460527800734    -3.488530397474     0.028002596739     216.6378     0.1255      2048000
+     40      40.00    -3.460532203037    -3.477521435177     0.016989232140     131.4346     0.1264      2048000
+     50      50.00    -3.460536493143    -3.479772950068     0.019236456925     148.8199     0.1274      2048000
+     60      60.00    -3.460538205320    -3.488963849125     0.028425643805     219.9106     0.1277      2048000
+     70      70.00    -3.460536793386    -3.496678847257     0.036142053871     279.6074     0.1281      2048000
+     80      80.00    -3.460533971302    -3.498988637678     0.038454666376     297.4986     0.1284      2048000
+     90      90.00    -3.460531450722    -3.497381158898     0.036849708176     285.0821     0.1287      2048000
+    100     100.00    -3.460530042402    -3.495873507935     0.035343465533     273.4293     0.1292      2048000
+Thu Jan  5 15:45:53 2017: Ending simulation
+
+
+
+Simulation Validation:
+  Initial energy  : -3.460523233086
+  Final energy    : -3.460530042402
+  eFinal/eInitial : 1.000002
+  Final atom count : 2048000, no atoms lost
+
+
+Timings for Rank 0
+        Timer        # Calls    Avg/Call (s)   Total (s)    % Loop
+___________________________________________________________________
+total                      1       3.9359        3.9359      120.81
+loop                       1       3.2579        3.2579      100.00
+timestep                  10       0.3254        3.2542       99.89
+  position               100       0.0000        0.0005        0.02
+  velocity               200       0.0000        0.0011        0.03
+  redistribute           101       0.0157        1.5888       48.77
+    atomHalo             101       0.0026        0.2674        8.21
+  force                  101       0.0155        1.5613       47.92
+    eamHalo              101       0.0154        1.5593       47.86
+commHalo                 202       0.0015        0.3119        9.57
+commReduce                39       0.0002        0.0092        0.28
+
+Timing Statistics Across 8 Ranks:
+        Timer        Rank: Min(s)       Rank: Max(s)      Avg(s)    Stdev(s)
+_____________________________________________________________________________
+total                2:    3.9359       0:    3.9359      3.9359      0.0000
+loop                 1:    3.2578       2:    3.2580      3.2579      0.0001
+timestep             0:    3.2542       1:    3.2543      3.2543      0.0000
+  position           0:    0.0005       6:    0.0005      0.0005      0.0000
+  velocity           2:    0.0011       4:    0.0011      0.0011      0.0000
+  redistribute       7:    1.5459       0:    1.5888      1.5648      0.0171
+    atomHalo         7:    0.2250       0:    0.2674      0.2443      0.0167
+  force              2:    1.5580       7:    1.6016      1.5849      0.0181
+    eamHalo          2:    1.5561       7:    1.5996      1.5829      0.0181
+commHalo             0:    0.3119       5:    0.3209      0.3164      0.0034
+commReduce           1:    0.0043       0:    0.0092      0.0065      0.0017
+
+---------------------------------------------------
+ Average atom update rate:       0.13 us/atom/task
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average all atom update rate:   0.02 us/atom
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average atom rate:             62.93 atoms/us
+---------------------------------------------------
+
+Thu Jan  5 15:45:53 2017: CoMD Ending
+
++ date
+gio  5 gen 2017, 15.45.53, GMT

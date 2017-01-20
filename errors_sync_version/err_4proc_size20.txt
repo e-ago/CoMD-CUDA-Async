@@ -1,0 +1,176 @@
++ local A=0
++ local B=0
++ local C=1
++ local D=1
++ local NP=4
++ shift 5
++ local 'PAR=-e -i 2 -j 2 -k 1 -x 20 -y 20 -z 20'
++ date
+gio 12 gen 2017, 15.14.12, GMT
++ tee -a run.log
++ echo
+
++ echo
+
++ mpirun -x ASYNC_USE_ASYNC=0 -x ASYNC_ENABLE_DEBUG=0 -x COMM_USE_COMM=0 -x COMM_USE_ASYNC=0 -x COMM_USE_GPU_COMM=0 -x MP_ENABLE_DEBUG=0 -x GDS_ENABLE_DEBUG=0 -x ENABLE_DEBUG_MSG=0 -x MLX5_DEBUG_MASK=0 -x MLX5_FREEZE_ON_ERROR_CQE=0 -x MP_DBREC_ON_GPU=0 -x MP_RX_CQ_ON_GPU=0 -x MP_TX_CQ_ON_GPU=0 -x MP_EVENT_ASYNC=0 -x MP_GUARD_PROGRESS=0 -x GDS_DISABLE_WRITE64=0 -x GDS_SIMULATE_WRITE64=0 -x GDS_DISABLE_INLINECOPY=0 -x GDS_ENABLE_WEAK_CONSISTENCY=1 -x GDS_DISABLE_MEMBAR=1 -x CUDA_VISIBLE_DEVICES=0 -x CUDA_DISABLE_UNIFIED_MEMORY=0 --mca btl_openib_want_cuda_gdr 1 --map-by node -np 4 -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/CoMD-CUDA/bin/CoMD-cuda-mpi -e -i 2 -j 2 -k 1 -x 20 -y 20 -z 20
+[tesla68:36750] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla70:36454] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla69:33860] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+[tesla71:09636] mca: base: component_find: unable to open /usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib/openmpi/mca_mtl_psm: libpsm_infinipath.so.1: cannot open shared object file: No such file or directory (ignored)
+Thu Jan 12 15:14:13 2017: Starting Initialization
+
+
+Mini-Application Name    : CoMD-cuda-mpi
+Mini-Application Version : 1.1
+Platform:
+  hostname: tesla70
+  kernel name: 'Linux'
+  kernel release: '3.10.0-327.36.3.el7.x86_64'
+  processor: 'x86_64'
+Build:
+  CC: '/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/bin/mpicc'
+  compiler version: 'gcc (GCC) 5.3.0'
+  CFLAGS: '-std=c99 -Wno-unused-result -DMAXATOMS=64  -DNDEBUG -g -O5 -DCOMD_DOUBLE -DDO_MPI  -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi -I/usr/local/Cluster-Apps/cuda/8.0/include'
+  LDFLAGS: '-L/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/lib -lmpi -lm -lstdc++ -L/usr/local/Cluster-Apps/cuda/8.0/lib64 -lcudart'
+  using MPI: true
+  Threading: none
+  Double Precision: true
+Run Date/Time: 2017-01-12, 15:14:13
+
+Command Line Parameters:
+  doeam: 1
+  potDir: pots
+  potName: Cu_u6.eam
+  potType: funcfl
+  nx: 20
+  ny: 20
+  nz: 20
+  xproc: 2
+  yproc: 2
+  zproc: 1
+  Lattice constant: -1 Angstroms
+  nSteps: 100
+  printRate: 10
+  Time step: 1 fs
+  Initial Temperature: 600 K
+  Initial Delta: 0 Angstroms
+
+  GPU async opt: 0
+  GPU profiling mode: 0
+  GPU method: thread_atom
+  Space-filling (Hilbert): 0
+
+Host tesla68 using GPU 0: Tesla K20c
+
+Host tesla70 using GPU 0: Tesla K20c
+
+Host tesla71 using GPU 0: Tesla K20c
+
+Host tesla69 using GPU 0: Tesla K20c
+
+Simulation data: 
+  Total atoms        : 32000
+  Min global bounds  : [   0.0000000000,   0.0000000000,   0.0000000000 ]
+  Max global bounds  : [  72.3000000000,  72.3000000000,  72.3000000000 ]
+
+Decomposition data: 
+  Processors         :      2,     2,     1
+  Local boxes        :      7,     7,    14 =      686
+  Box size           : [   5.1642857143,   5.1642857143,   5.1642857143 ]
+  Box factor         : [   1.0432900433,   1.0432900433,   1.0432900433 ] 
+  Max Link Cell Occupancy: 14 of 64
+
+Potential data: 
+  Potential type  : EAM
+  Species name    : Cu
+  Atomic number   : 29
+  Mass            : 63.55 amu
+  Lattice type    : FCC
+  Lattice spacing : 3.615 Angstroms
+  Cutoff          : 4.95 Angstroms
+
+Memory data: 
+  Intrinsic atom footprint =   88 B/atom 
+  Total atom footprint     =   2.686 MB (  0.67 MB/node)
+  Link cell atom footprint =   3.685 MB/node
+  Link cell atom footprint =   6.961 MB/node (including halo cell data
+
+
+Initial energy : 0.000000000000, atom count : 32000 
+
+Thu Jan 12 15:14:13 2017: Initialization Finished
+
+Thu Jan 12 15:14:13 2017: Starting simulation
+
+#                                                                                         Performance
+#  Loop   Time(fs)       Total Energy   Potential Energy     Kinetic Energy  Temperature   (us/atom)     # Atoms
+      0       0.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.0000        32000
+     10      10.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1086        32000
+     20      20.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1029        32000
+     30      30.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1022        32000
+     40      40.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1025        32000
+     50      50.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1025        32000
+     60      60.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1021        32000
+     70      70.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1018        32000
+     80      80.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1018        32000
+     90      90.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1015        32000
+    100     100.00     0.000000000000     0.000000000000     0.000000000000       0.0000     0.1027        32000
+Thu Jan 12 15:14:13 2017: Ending simulation
+
+
+
+Simulation Validation:
+  Initial energy  : 0.000000000000
+  Final energy    : 0.000000000000
+  eFinal/eInitial : -nan
+  Final atom count : 32000, no atoms lost
+
+
+Timings for Rank 0
+        Timer        # Calls    Avg/Call (s)   Total (s)    % Loop
+___________________________________________________________________
+total                      1       0.3288        0.3288      398.87
+loop                       1       0.0824        0.0824      100.00
+timestep                  10       0.0082        0.0823       99.83
+  position               100       0.0000        0.0001        0.07
+  velocity               200       0.0000        0.0002        0.21
+  redistribute           101       0.0006        0.0581       70.43
+    atomHalo             101       0.0003        0.0308       37.41
+  force                  101       0.0003        0.0282       34.16
+    eamHalo              101       0.0003        0.0278       33.71
+commHalo                 606       0.0000        0.0062        7.52
+commReduce                39       0.0000        0.0011        1.29
+
+Timing Statistics Across 4 Ranks:
+        Timer        Rank: Min(s)       Rank: Max(s)      Avg(s)    Stdev(s)
+_____________________________________________________________________________
+total                3:    0.3268       0:    0.3288      0.3274      0.0008
+loop                 0:    0.0824       1:    0.0827      0.0826      0.0001
+timestep             0:    0.0823       2:    0.0824      0.0823      0.0000
+  position           0:    0.0001       2:    0.0001      0.0001      0.0000
+  velocity           2:    0.0001       0:    0.0002      0.0002      0.0000
+  redistribute       1:    0.0563       0:    0.0581      0.0572      0.0008
+    atomHalo         1:    0.0295       2:    0.0309      0.0303      0.0006
+  force              2:    0.0272       1:    0.0285      0.0280      0.0005
+    eamHalo          2:    0.0268       1:    0.0281      0.0276      0.0005
+commHalo             2:    0.0048       0:    0.0062      0.0056      0.0005
+commReduce           0:    0.0011       3:    0.0017      0.0014      0.0003
+
+---------------------------------------------------
+ Average atom update rate:       0.10 us/atom/task
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average all atom update rate:   0.03 us/atom
+---------------------------------------------------
+
+
+---------------------------------------------------
+ Average atom rate:             38.87 atoms/us
+---------------------------------------------------
+
+Thu Jan 12 15:14:13 2017: CoMD Ending
+
++ date
+gio 12 gen 2017, 15.14.13, GMT

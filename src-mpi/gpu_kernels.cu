@@ -741,7 +741,7 @@ int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gp
   int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
   int block = THREAD_ATOM_CTA;
 
-  printf("grid: %d, nBuf: %d, block: %d\n", grid, nBuf, block);
+//  printf("grid: %d, nBuf: %d, block: %d\n", grid, nBuf, block);
   vec_t r,p;
   int *type = gid + nBuf;
   r.x = (real_t*)(type + nBuf);
