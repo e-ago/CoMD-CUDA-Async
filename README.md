@@ -5,4 +5,4 @@ Asynchronous Communications version of the original CoMD-CUDA application (https
 ## Work reference
 
 For further informations please refer to: <br>
-"Offloading communication control logic in GPU accelerated applications", E. Agostini, D. Rossetti, S. Potluri
+E. Agostini, D. Rossetti, S. Potluri, "Offloading communication control logic in GPU accelerated applications", CCGrid '17 conference
