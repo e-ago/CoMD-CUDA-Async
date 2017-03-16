@@ -41,6 +41,8 @@ C_LIB = -lm -lstdc++
 
 CUB_INCLUDE= -I$(PREFIX)/src/cub/cub
 MPI_INCLUDE= -I$(MPI_HOME)/include
+MPI_LIB= -L/lib64 -L/lib  
+#DGX-1 required
 #-I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi
 #use those includes shown by 'mpicc --show'
 
