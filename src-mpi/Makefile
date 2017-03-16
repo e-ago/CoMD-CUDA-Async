@@ -39,11 +39,12 @@ C_LIB = -lm -lstdc++
 ### If you need to specify include paths, library paths, or link flags
 ### for MPI, put them here.  Put both -L and -l switches into MPI_LIB.
 
-MPI_INCLUDE = -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi
+MPI_INCLUDE = -I$(MPI_HOME)/include
+#-I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include -I/usr/local/Cluster-Apps/openmpi/gnu/1.10.3/include/openmpi
 #use those includes shown by 'mpicc --show'
 
 #ASYNC
-MP_INCLUDE= -I$(PREFIX)/include
+MP_INCLUDE= -I$(PREFIX)/include -I$(MPI_HOME)/include
 MP_LIB= -L$(PREFIX)/lib -lmp -lgdsync -lgdrapi -lcuda -libverbs
 
 
