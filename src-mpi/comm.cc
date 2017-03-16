@@ -162,7 +162,7 @@ int comm_init(MPI_Comm comm)
     assert(comm_size-1 == n_peers);
     DBG("n_peers=%d\n", n_peers);
 
-    MP_CHECK(mp_init(comm, peers, n_peers));
+    MP_CHECK(mp_init(comm, peers, n_peers, 0));
 
 #if 0
     // init ready stuff
