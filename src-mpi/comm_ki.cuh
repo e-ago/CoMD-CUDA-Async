@@ -2,9 +2,9 @@
 #define __KI_FUNC_H_
 
 //#if 1
-#include "../cub/cub/thread/thread_load.cuh"
+#include <thread/thread_load.cuh>
 #include "comm.h"
-#include <mp_device.cuh>
+#include <mp/device.cuh>
 
 //using namespace cub;
 
@@ -18,7 +18,7 @@
 #define TOT_TYPES 3
 
 typedef struct sched_info {
-  mp::sem32_t sema;
+  //mp::sem32_t sema;
   unsigned int block;
   unsigned int done[TOT_TYPES];
 } sched_info_t;
@@ -31,8 +31,8 @@ __global__ void scheds_init()
   assert(gridDim.x == 1);
   assert(blockDim.x >= TOT_SCHEDS);
   if (j < TOT_SCHEDS) {
-    scheds[j].sema.sem = 0;
-    scheds[j].sema.value = 1;
+    //scheds[j].sema.sem = 0;
+    //scheds[j].sema.value = 1;
     scheds[j].block = 0;
     for (int i = 0; i < TOT_TYPES; ++i)
       scheds[j].done[i] = 0;
