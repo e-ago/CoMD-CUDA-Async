@@ -47,7 +47,6 @@ MPI_INCLUDE = -I$(MPI_HOME)/include
 MP_INCLUDE= -I$(PREFIX)/include -I$(MPI_HOME)/include
 MP_LIB= -L$(PREFIX)/lib -lmp -lgdsync -lgdrapi -lcuda -libverbs
 
-
 ### A place to specify any other include or library switches your
 ### platform requires.
 OTHER_LIB = -L$(CUDA_HOME)/lib64 -lcudart
