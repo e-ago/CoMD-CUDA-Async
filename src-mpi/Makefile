@@ -50,7 +50,7 @@ MP_LIB= -L$(PREFIX)/lib -lmp -lgdsync -lgdrapi -lcuda -libverbs
 ### A place to specify any other include or library switches your
 ### platform requires.
 OTHER_LIB = -L$(CUDA_HOME)/lib64 -lcudart
-OTHER_INCLUDE = -I$(CUDA_HOME)/include
+OTHER_INCLUDE = -I$(CUDA_HOME)/include -I$(MPI_HOME)/include
 
 ### CUDA targets
 # set up nvcc compiler path
