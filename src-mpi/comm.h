@@ -4,12 +4,12 @@
 
 
 #ifdef __cplusplus
-#include "mp_device.cuh"
+#include "mp/device.cuh"
 //num send/recv contemporanee
 struct comm_dev_descs {
     enum { max_n_descs = 16 };
     int n_ready;
-    mp::isem32_t ready[max_n_descs];
+    mp::mlx5::isem32_t ready[max_n_descs];
 
     int n_tx;
     mp::mlx5::send_desc_t tx[max_n_descs];
