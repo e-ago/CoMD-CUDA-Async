@@ -27,7 +27,7 @@ DEBUG = OFF
 CC = mpicc
 CCX = mpic++
 #ASYNC change ... was mpicc
-CFLAGS = -std=c++11 -Wno-unused-result -DMAXATOMS=$(MAXATOMS)
+CFLAGS = -std=gnu11 -Wno-unused-result -DMAXATOMS=$(MAXATOMS)
 #-std=c99
 #-std=c++11
 OPTFLAGS =
