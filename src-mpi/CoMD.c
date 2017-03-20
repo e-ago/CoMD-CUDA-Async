@@ -110,6 +110,10 @@ int main(int argc, char** argv)
    SetupGpu(0);
 #endif
 
+   #ifdef USE_ASYNC
+   comm_init(MPI_COMM_WORLD);
+   #endif
+
    SimFlat* sim = initSimulation(cmd);
    printSimulationDataYaml(yamlFile, sim);
    printSimulationDataYaml(screenOut, sim);
