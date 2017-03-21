@@ -64,8 +64,10 @@ NVCC_FLAGS += -std=c++11 -DMAXATOMS=$(MAXATOMS)
 NVCC_FLAGS += --ptxas-options=-v -lineinfo #-g -G
 # add support for various cuda architectures below
 #NVCC_FLAGS += -gencode arch=compute_20,code=sm_20
-NVCC_FLAGS += -gencode arch=compute_35,code=sm_35
+#NVCC_FLAGS += -gencode arch=compute_35,code=sm_35
 #NVCC_FLAGS += -gencode arch=compute_52,code=sm_52
+#DGX required
+NVCC_FLAGS += -gencode arch=compute_60,code=sm_60
 
 # add precision flag for CUDA targets
 ifeq ($(DOUBLE_PRECISION), ON)
