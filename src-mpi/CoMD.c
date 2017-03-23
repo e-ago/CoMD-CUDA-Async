@@ -105,6 +105,10 @@ int main(int argc, char** argv)
 
    // set active device (assuming homogenous config)
    int deviceId = getMyRank() % numGpus;
+    //elenago DGX
+   if(deviceId%2 != 0)
+    deviceId++;
+
    SetupGpu(deviceId);
 #else
    SetupGpu(0);
