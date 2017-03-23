@@ -109,7 +109,7 @@ int main(int argc, char** argv)
    if(deviceId%2 != 0)
     deviceId++;
 
-  printf("myRank: %d, myDevice:\n", );
+  printf("myRank: %d, myDevice:\n", getMyRank(), deviceId);
 
    SetupGpu(deviceId);
 #else
