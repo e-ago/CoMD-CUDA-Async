@@ -104,7 +104,7 @@ int main(int argc, char** argv)
    cudaGetDeviceCount(&numGpus);
 
   // set active device (assuming homogenous config)
-  int my_rank=0:
+  int my_rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   int deviceId = comm_set_device(my_rank); //getMyRank() % numGpus;
   SetupGpu(deviceId);
