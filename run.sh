@@ -37,7 +37,6 @@ function run() {
         -x GDS_DISABLE_INLINECOPY=$B       \
         -x GDS_ENABLE_WEAK_CONSISTENCY=$C \
         -x GDS_DISABLE_MEMBAR=$D           \
-        -x CUDA_VISIBLE_DEVICES=0 \
 	   -x CUDA_DISABLE_UNIFIED_MEMORY=0 \
     --mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 $PREFIX/src/scripts/wrapper.sh $PREFIX/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
 #	--mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh  nvprof -o nvprof-async16.%q{OMPI_COMM_WORLD_RANK}.nvprof /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
