@@ -770,7 +770,7 @@ int comm_set_device(int mpiRank)
     char * value = getenv("USE_GPU"); 
     if (value != NULL) {
         deviceNumber = atoi(value);
-        printf("MyRank: %d, USE_GPU: %d\n", deviceNumber);
+        printf("MyRank: %d, USE_GPU: %d\n", mpiRank, deviceNumber);
     }
     else
     {
