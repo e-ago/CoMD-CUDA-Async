@@ -103,15 +103,9 @@ int main(int argc, char** argv)
    int numGpus;
    cudaGetDeviceCount(&numGpus);
 
-   // set active device (assuming homogenous config)
-   int deviceId = getMyRank() % numGpus;
-    //elenago DGX
-   if(deviceId%2 != 0)
-    deviceId++;
-
-  printf("myRank: %d, myDevice: %d numGpus: %d\n", getMyRank(), deviceId, numGpus);
-
-   SetupGpu(deviceId);
+  // set active device (assuming homogenous config)
+  int deviceId = comm_set_device(my_rank); //getMyRank() % numGpus;
+  SetupGpu(deviceId);
 #else
    SetupGpu(0);
 #endif

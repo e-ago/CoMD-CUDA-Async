@@ -758,3 +758,24 @@ comm_dev_descs_t comm_prepared_requests()
     memset(dreqs(), 0, sizeof(struct comm_dev_descs));
     return ret;
 }
+
+//DGX helper
+int comm_set_device(int mpiRank)
+{
+    int deviceNumber=0;
+    int numDevices=0;
+    
+    char * value = getenv("USE_GPU"); 
+    if (value != NULL) {
+        deviceNumber = atoi(value);
+        DBG("USE_GPU: %d\n", deviceNumber);
+    }
+    else
+    {
+        // query number of GPU devices in the system
+        cudaGetDeviceCount(&numDevices);
+        deviceNumber = mpiRank % numDevices;
+    }
+
+    return deviceNumber;
+}
