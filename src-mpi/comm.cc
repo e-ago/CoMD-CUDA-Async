@@ -162,6 +162,7 @@ int comm_init(MPI_Comm comm)
     assert(comm_size-1 == n_peers);
     DBG("n_peers=%d\n", n_peers);
 
+    //CUDA context initialization
     cudaFree(0);
     MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT));
 
