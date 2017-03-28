@@ -94,7 +94,7 @@ extern "C" {
     int comm_prepare_wait_all(int count, comm_request_t *creqs);
     comm_dev_descs_t comm_prepared_requests();
     int comm_register(void *buf, size_t size, comm_reg_t *creg);
-    
+    int comm_set_device(int mpiRank);
     comm_dev_descs_t get_curr_descs_req();
     comm_dev_descs_t get_start_descs_req();
     comm_dev_descs_t update_curr_descs_pointer();
