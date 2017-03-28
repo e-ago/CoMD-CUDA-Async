@@ -38,8 +38,8 @@ function run() {
         -x GDS_ENABLE_WEAK_CONSISTENCY=$C \
         -x GDS_DISABLE_MEMBAR=$D           \
         -x CUDA_VISIBLE_DEVICES=0 \
-	-x CUDA_DISABLE_UNIFIED_MEMORY=0 \
- --mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
+	   -x CUDA_DISABLE_UNIFIED_MEMORY=0 \
+    --mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 $PREFIX/src/scripts/wrapper.sh $PREFIX/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
 #	--mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh  nvprof -o nvprof-async16.%q{OMPI_COMM_WORLD_RANK}.nvprof /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
 
 
@@ -79,12 +79,12 @@ echo "CWD=$PWD"
 #run 0 0 1 1 8 -e -i 8 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_8proc_8x_40.txt
 #run 0 0 1 1 16 -e -i 16 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_16proc_16x_40.txt
 
-#run 0 0 1 1 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_2proc_2x_80.txt
+run 0 0 1 1 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_2proc_2x_80.txt
 #run 0 0 1 1 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80 &> out_4proc_2x_2y_80.txt
 #run 0 0 1 1 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_8proc_2x_2y_2z_80.txt
 #run 0 0 1 1 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_16proc_4x_2y_2z_80_debug_comm.txt
 
-run 0 0 1 1 32 -e -i 4 -j 4 -k 2 -x 80 -y 80 -z 80 &> out_32proc_4x_4y_2z_80_comm.txt
+#run 0 0 1 1 32 -e -i 4 -j 4 -k 2 -x 80 -y 80 -z 80 &> out_32proc_4x_4y_2z_80_comm.txt
 #run 0 0 1 1 4 -e -i 4 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_4proc_4x_80.txt
 #run 0 0 1 1 8 -e -i 8 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_8proc_8x_80.txt
 #run 0 0 1 1 16 -e -i 16 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_16proc_16x_80.txt
