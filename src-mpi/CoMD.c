@@ -84,6 +84,7 @@ static void sanityChecks(Command cmd, double cutoff, double latticeConst, char l
 
 int main(int argc, char** argv)
 {
+    int deviceId=0;
    // Prolog
    initParallel(&argc, &argv);
    profileStart(totalTimer);
@@ -108,14 +109,15 @@ int main(int argc, char** argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   //Required by topology, even if comm is not used at all!
-  int deviceId = comm_set_device(my_rank); //getMyRank() % numGpus;
+  deviceId = comm_select_device(my_rank); //getMyRank() % numGpus;
   SetupGpu(deviceId);
+  if(comm_use_comm())
+    comm_init(MPI_COMM_WORLD, deviceId);
+
 #else
    SetupGpu(0);
 #endif
 
-  if(comm_use_comm())
-    comm_init(MPI_COMM_WORLD);
 
    SimFlat* sim = initSimulation(cmd);
    printSimulationDataYaml(yamlFile, sim);
