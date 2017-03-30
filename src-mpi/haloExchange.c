@@ -643,7 +643,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
       //That's for communication timers comparison!
       //cudaDeviceSynchronize();
       stopTimer(commHaloTimer);
-      comm_progress();
+      if (comm_use_comm() && (comm_use_async() || comm_use_gpu_comm()) )
+         comm_progress();
    }
 }
 
