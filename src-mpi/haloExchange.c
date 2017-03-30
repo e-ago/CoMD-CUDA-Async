@@ -1,4 +1,4 @@
-F/// \file
+/// \file
 /// Communicate halo data such as "ghost" atoms with neighboring tasks.
 /// In addition to ghost atoms, the EAM potential also needs to exchange
 /// some force information.  Hence this file implements both an atom
@@ -28,11 +28,11 @@ F/// \file
 /// network links would likely benefit from alternate halo exchange
 /// strategies that send independent messages to each neighbor task.
 
+#include "haloExchange.h"
 
 #include <assert.h>
 #include <stdio.h>
 
-//#include "haloExchange.h"
 #include "CoMDTypes.h"
 #include "decomposition.h"
 #include "parallel.h"
