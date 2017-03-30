@@ -38,7 +38,7 @@ static int         n_peers = -1;
 static const int   bad_peer = -1;
 static int         comm_size;
 static int         comm_rank;
-static int         current_gpu_id=0;
+static int         comm_gpu_id=0;
 
 // tables are indexed by rank, not peer
 static uint32_t   *ready_table;
@@ -165,8 +165,8 @@ int comm_init(MPI_Comm comm, int gpuId)
 
     //CUDA context initialization
     //cudaFree(0);
-    current_gpu_id=gpuId;
-    mp_setup_gpu_id(current_gpu_id);
+    comm_gpu_id=gpuId;
+    mp_setup_gpu_id(comm_gpu_id);
     MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT));
 
 #if 0
