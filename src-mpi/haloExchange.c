@@ -167,8 +167,6 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
    cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
    cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
 
-#ifdef USE_ASYNC
-
    int sendSize =  SIZE_BYTES+hh->bufCapacity;
    int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
@@ -267,8 +265,6 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
      
       }
 */
-
-#endif
 
    hh->loadBuffer = loadAtomsBuffer;
    hh->unloadBuffer = unloadAtomsBuffer;
@@ -370,8 +366,6 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
    cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
 
-#ifdef USE_ASYNC
-
    int sendSize =  SIZE_BYTES+hh->bufCapacity;
    int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
@@ -422,8 +416,6 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
-
-#endif
 
    ForceExchangeParms* parms = (ForceExchangeParms*)comdMalloc(sizeof(ForceExchangeParms));
 
@@ -483,9 +475,6 @@ void destroyHaloExchange(HaloExchange** haloExchange)
    free(*haloExchange);
    *haloExchange = NULL;
 }
-
-#ifdef USE_ASYNC
-
 static int sizeMsgM[3];
 static int sizeMsgP[3];
 static int sizeMsgIndex=0;
@@ -749,15 +738,12 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
    }
 }
 
-#else
 
 void haloExchange_MPI(HaloExchange* haloExchange, void* data)
 {
    for (int iAxis=0; iAxis<3; ++iAxis)
       exchangeData(haloExchange, data, iAxis);
 }
-
-#endif
 
 /// Base class constructor.
 HaloExchange* initHaloExchange(Domain* domain)
