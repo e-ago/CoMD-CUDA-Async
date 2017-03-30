@@ -1519,19 +1519,15 @@ int loadAtomsBuffer(void* vparms, void* data, int face, char* charBuf)
 
            nTotalAtomsCellList = compactCellsGpu(sim->gpu_atoms_buf, nCells, d_cellList, sim->gpu,  parms->d_natoms_buf, parms->d_partial_sums,shift,sim->boundary_stream);
 //           printf("gpu: %d\n",nTotalAtomsCellList);
-
-           
             if((face%2) == 0)
             {
-               if(getMyRank() == 0)
-               printf("RANK[%d], msgM, nTotalAtomsCellList: %d, sizeMsgIndex: %d face: %d\n",  getMyRank(), nTotalAtomsCellList, sizeMsgIndex, face);
+//               if(getMyRank() == 0) printf("RANK[%d], msgM, nTotalAtomsCellList: %d, sizeMsgIndex: %d face: %d\n",  getMyRank(), nTotalAtomsCellList, sizeMsgIndex, face);
                sizeMsgM[sizeMsgIndexM] = nTotalAtomsCellList;
                sizeMsgIndexM++;
             }
             else
             {
-               if(getMyRank() == 0)
-               printf("RANK[%d], msgP, nTotalAtomsCellList: %d, sizeMsgIndex: %d face: %d\n",  getMyRank(), nTotalAtomsCellList, sizeMsgIndex, face);
+//               if(getMyRank() == 0) printf("RANK[%d], msgP, nTotalAtomsCellList: %d, sizeMsgIndex: %d face: %d\n",  getMyRank(), nTotalAtomsCellList, sizeMsgIndex, face);
                sizeMsgP[sizeMsgIndexP] = nTotalAtomsCellList;
                sizeMsgIndexP++;
             }
