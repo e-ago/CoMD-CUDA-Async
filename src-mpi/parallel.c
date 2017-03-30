@@ -9,6 +9,7 @@
 
 #ifdef DO_MPI
 #include <mpi.h>
+#include "comm.h"
 #endif
 
 #include <stdio.h>
@@ -20,17 +21,15 @@ static int myRank = 0;
 static int nRanks = 1;
 
 #ifdef DO_MPI
+
 #ifdef COMD_SINGLE
-#define REAL_MPI_TYPE MPI_FLOAT
+   #define REAL_MPI_TYPE MPI_FLOAT
 #else
-#define REAL_MPI_TYPE MPI_DOUBLE
+   #define REAL_MPI_TYPE MPI_DOUBLE
 #endif
 
 #endif
 
-#ifdef USE_ASYNC
-#include "comm.h"
-#endif
 
 int getNRanks()
 {
