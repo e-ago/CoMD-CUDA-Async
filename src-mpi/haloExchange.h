@@ -155,6 +155,8 @@ void destroyHaloExchange(HaloExchange** haloExchange);
 
 /// Execute a halo exchange.
 void haloExchange(HaloExchange* haloExchange, void* data);
+void haloExchange_Comm(HaloExchange* haloExchange, void* data);
+void haloExchange_MPI(HaloExchange* haloExchange, void* data);
 
 /// Sort the atoms by gid in the specified link cell.
 void sortAtomsInCell(struct AtomsSt* atoms, struct LinkCellSt* boxes, int iBox);
