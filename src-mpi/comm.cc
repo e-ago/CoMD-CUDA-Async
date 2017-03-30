@@ -164,7 +164,7 @@ int comm_init(MPI_Comm comm)
     DBG("n_peers=%d\n", n_peers);
 
     //CUDA context initialization
-    cudaFree(0);
+    //cudaFree(0);
     mp_setup_gpu_id(current_gpu_id);
     MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT));
 
@@ -771,7 +771,7 @@ int comm_set_device(int mpiRank)
     char * value = getenv("USE_GPU"); 
     if (value != NULL) {
         current_gpu_id = atoi(value);
-        DBG("USE_GPU: %d\n", current_gpu_id);
+        //DBG("USE_GPU: %d\n", current_gpu_id);
     }
     else
     {
