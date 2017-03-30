@@ -159,67 +159,69 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
    hh->bufCapacity = maxSize*2*MAXATOMS*sizeof(AtomMsg);
    
    // -----------------------------
+   if(comm_use_comm())
+   {
+      hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
+      hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
+      hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
+      hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
 
-   hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
-   hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
-   hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
-   hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
+      // pin memory
+      cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
+      cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
+      cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
+      cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
 
-   // pin memory
-   cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
-   cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
-   cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
-   cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
+      int sendSize =  SIZE_BYTES+hh->bufCapacity;
+      int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
-   int sendSize =  SIZE_BYTES+hh->bufCapacity;
-   int recvSize =  SIZE_BYTES+hh->bufCapacity;
+      //printf("----> ATOMS. Recv Size: %d Send Size: %d\n", recvSize, sendSize);
+      
+      hh->sendBufM_Async = (char**) calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[0]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[1]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[2]), sendSize));
 
-   //printf("----> ATOMS. Recv Size: %d Send Size: %d\n", recvSize, sendSize);
-   
-   hh->sendBufM_Async = (char**) calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[0]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[1]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[2]), sendSize));
+      hh->sendBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[0]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[1]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[2]), sendSize));
 
-   hh->sendBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[0]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[1]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[2]), sendSize));
+      hh->recvBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[0]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[1]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[2]), recvSize));
 
-   hh->recvBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[0]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[1]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[2]), recvSize));
+      hh->recvBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[0]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[1]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[2]), recvSize));
 
-   hh->recvBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[0]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[1]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[2]), recvSize));
+      hh->d_recvBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[0]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[1]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[2]), recvSize));
+     
+      hh->d_recvBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[0]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[1]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[2]), recvSize));
+     
+      hh->d_sendBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[0]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[1]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[2]), sendSize));
 
-   hh->d_recvBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[0]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[1]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[2]), recvSize));
-  
-   hh->d_recvBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[0]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[1]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[2]), recvSize));
-  
-   hh->d_sendBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[0]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[1]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[2]), sendSize));
+      hh->d_sendBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[0]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[1]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[2]), sendSize));
 
-   hh->d_sendBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[0]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[1]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[2]), sendSize));
-
-   hh->regSendM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
+      hh->regSendM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
+   }
 
 // -----------------------------
 
@@ -313,67 +315,69 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    hh->bufCapacity = (maxSize)*MAXATOMS*sizeof(ForceMsg);
 
 // -----------------------------
+   if(comm_use_comm())
+   {
+      hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
+      hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
+      hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
+      hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
 
-   hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
-   hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
-   hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
-   hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
+      // pin memory
+      cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
+      cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
+      cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
+      cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
 
-   // pin memory
-   cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
-   cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
-   cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
-   cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
+      int sendSize =  SIZE_BYTES+hh->bufCapacity;
+      int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
-   int sendSize =  SIZE_BYTES+hh->bufCapacity;
-   int recvSize =  SIZE_BYTES+hh->bufCapacity;
+    //  printf("INIT: MyRANK: %d, sendSize: %d, recvSize: %d\n", getMyRank(), sendSize, recvSize);
 
- //  printf("INIT: MyRANK: %d, sendSize: %d, recvSize: %d\n", getMyRank(), sendSize, recvSize);
+      hh->sendBufM_Async = (char**) calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[0]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[1]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[2]), sendSize));
 
-   hh->sendBufM_Async = (char**) calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[0]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[1]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufM_Async[2]), sendSize));
+      hh->sendBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[0]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[1]), sendSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[2]), sendSize));
 
-   hh->sendBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[0]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[1]), sendSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->sendBufP_Async[2]), sendSize));
+      hh->recvBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[0]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[1]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[2]), recvSize));
 
-   hh->recvBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[0]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[1]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufM_Async[2]), recvSize));
+      hh->recvBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[0]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[1]), recvSize));
+      CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[2]), recvSize));
 
-   hh->recvBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[0]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[1]), recvSize));
-   CUDACHECK(cudaMallocHost((void**)&(hh->recvBufP_Async[2]), recvSize));
+      hh->d_recvBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[0]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[1]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[2]), recvSize));
+     
+      hh->d_recvBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[0]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[1]), recvSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[2]), recvSize));
 
-   hh->d_recvBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[0]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[1]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufM_Async[2]), recvSize));
-  
-   hh->d_recvBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[0]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[1]), recvSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_recvBufP_Async[2]), recvSize));
+      hh->d_sendBufM_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[0]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[1]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[2]), sendSize));
 
-   hh->d_sendBufM_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[0]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[1]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufM_Async[2]), sendSize));
+      hh->d_sendBufP_Async = (char**)calloc(3, sizeof(char*));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[0]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[1]), sendSize));
+      CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[2]), sendSize));
 
-   hh->d_sendBufP_Async = (char**)calloc(3, sizeof(char*));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[0]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[1]), sendSize));
-   CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[2]), sendSize));
-
-   hh->regSendM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
-   hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
+      hh->regSendM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
+      hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));         
+   }
 
 // -----------------------------
 
