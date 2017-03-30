@@ -77,9 +77,8 @@ void destroyParallel()
 {
 #ifdef DO_MPI
 
-   #ifdef USE_ASYNC
-      comm_finalize();
-   #endif
+  if(comm_use_comm())
+    comm_finalize();
 
    MPI_Finalize();
 #endif

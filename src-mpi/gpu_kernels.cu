@@ -712,10 +712,113 @@ int loadAtomsBufferFromGpu_Async(char * sendBuf, int * sendSize,
   return sendSize[0];
 }
 
+extern "C"
+int loadAtomsBufferFromGpu_Comm(char * sendBuf, int * sendSize,
+                          char* d_compactAtoms, int nCells, 
+                          int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, 
+                          int * d_workScan, real3_old shift, cudaStream_t stream, int type)
+{
+  scanCells(d_cellOffsets, nCells, d_cellList, sim_gpu.boxes.nAtoms, d_workScan, stream);
+  //cudaCheckError();
+
+  if(sendSize[0] == 0)
+  {
+    cudaStreamSynchronize(stream);
+    cudaMemcpy(sendSize, &(d_cellOffsets[nCells]), sizeof(int), cudaMemcpyDeviceToHost); //, stream);
+    assert(sendSize[0] != 0);
+  }
+  
+  //if(getMyRank() == 0)
+  //  printf("----> Load Atoms Send Size: %d, type: %d, nCells: %d\n", *sendSize, type, nCells);
+
+  int block = MAXATOMS;
+  int grid = nCells;
+  AtomMsgSoA msg_d;
+  
+  //devicemem
+  if(type == 1)
+  {
+    //alias host and device buffers with AtomMsgSoA
+    getAtomMsgSoAPtr(sendBuf, &msg_d, sendSize[0]);
+    //assemble compact array of particles
+    LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+    //cudaCheckError();
+  }
+  else
+  {
+    //alias host and device buffers with AtomMsgSoA
+    getAtomMsgSoAPtr(/*d_compactAtoms */sendBuf, &msg_d, sendSize[0]);
+    //assemble compact array of particles
+    LoadAtomsBufferPacked<<<grid, block,0,stream>>>(msg_d, d_cellList, sim_gpu, d_cellOffsets, shift[0], shift[1], shift[2]);
+    //cudaCheckError();
+    //cudaMemcpyAsync(sendBuf, d_compactAtoms, sendSize[0]*sizeof(AtomMsg), cudaMemcpyDeviceToHost, stream);
+  }
+
+  cudaDeviceSynchronize();
+
+#if 0
+  LoadAtomsBufferPacked_Async<<<grid, block,0,stream>>>(d_cellList, sim_gpu, d_cellOffsets, 
+    shift[0], shift[1], shift[2], nCells, sendBuf); //d_compactAtoms); //, (sendBuf+4) /*d_compactAtoms*/);  
+#endif
+
+  return sendSize[0];
+}
+
+
 static int indexEventCopy=0;
 
 extern "C"
 int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem) //cudaStream_t stream2,  cudaEvent_t * event_copy)
+{
+  int nBuf = sendSize;
+  //cudaStreamWaitEvent(stream, event_copy[indexEventCopy], 0);
+  //HostMem
+  //cudaStreamSynchronize(stream);
+  int *gid = (int*)gpu_buf; //buf; //gpu_buf
+
+  if(typeMem == 0)
+  {
+    cudaMemcpyAsync(gpu_buf, buf, nBuf * sizeof(AtomMsg), cudaMemcpyHostToDevice, stream);
+    gid = (int*)gpu_buf;
+   // cudaEventRecord(event_copy[indexEventCopy], stream2);
+  }
+  else
+    gid = (int*)buf;
+
+
+  //indexEventCopy = (indexEventCopy+1)%6;
+
+  // TODO: don't need to check if we're running cell-based approach
+  int nlUpdateRequired = neighborListUpdateRequiredGpu(&(sim->gpu)); //_Async(&(sim->gpu), haloExchange, num, iAxis);
+
+  int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+
+//  printf("grid: %d, nBuf: %d, block: %d\n", grid, nBuf, block);
+  vec_t r,p;
+  int *type = gid + nBuf;
+  r.x = (real_t*)(type + nBuf);
+  r.y = r.x + nBuf;
+  r.z = r.y + nBuf;
+  p.x = r.z + nBuf;
+  p.y = p.x + nBuf;
+  p.z = p.y + nBuf;
+
+  // use temp arrays
+  int *d_iOffset = sim->flags;
+  int *d_boxId = sim->tmp_sort;
+
+  computeOffsets(nlUpdateRequired, sim, r, d_iOffset, d_boxId, nBuf, stream);
+  cudaCheckError();
+  // map received particles to cells
+  UnloadAtomsBufferPacked<<<grid, block, 0, stream>>>(r, p, type, gid, nBuf, sim->gpu.atoms, d_iOffset);
+  //CUDA_GET_LAST_ERROR
+  cudaCheckError();
+  return nBuf;
+}
+
+extern "C"
+int unloadAtomsBufferToGpu_Comm(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem) //cudaStream_t stream2,  cudaEvent_t * event_copy)
 {
   int nBuf = sendSize;
   //cudaStreamWaitEvent(stream, event_copy[indexEventCopy], 0);
@@ -833,6 +936,21 @@ void loadForceBufferFromGpu_Async(char *buf, int bufSize, int nCells, int *cellL
 }
 
 extern "C"
+void loadForceBufferFromGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, 
+  SimFlat *s, char *gpu_buf, cudaStream_t stream)
+{
+  //printf("RANK[%d], load force scanCells. nCells: %d\n", getMyRank(), nCells);
+  scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+  // copy data to compacted array
+  int grid = (nCells * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+  LoadForceBuffer<<<grid, block, 0, stream>>>((ForceMsg*)buf, nCells, cellList, s->gpu, natoms_buf);
+  cudaCheckError();
+  cudaDeviceSynchronize();
+  CUDA_GET_LAST_ERROR
+}
+
+extern "C"
 void unloadForceScanCells(int nCells, int *cellList, int *natoms_buf, 
   int *partial_sums, SimFlat *s, cudaStream_t stream)
 {
@@ -865,6 +983,33 @@ void unloadForceBufferToGpu_Async(char *buf, int bufSize, int nCells, int *cellL
   int grid = (nCells * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
   int block = THREAD_ATOM_CTA;
   UnloadForceBuffer<<<grid, block, 0, stream>>>((ForceMsg*)  gpu_buf /*buf*/, nCells, cellList, s->gpu, natoms_buf);
+  CUDA_GET_LAST_ERROR
+  
+}
+
+extern "C"
+void unloadForceBufferToGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, 
+  int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type)
+{
+  //scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+
+  //Hostmem
+  if(type == 0)
+    cudaMemcpyAsync(gpu_buf, buf, bufSize, cudaMemcpyHostToDevice, stream);
+  else
+    gpu_buf = buf;
+
+  //scanCells(natoms_buf, nCells, cellList, s->gpu.boxes.nAtoms, partial_sums, stream);
+
+
+  //cudaCheckError();
+  //printf("unload force scanCells. nCells: %d\n", nCells);
+  
+  // copy data for the list of cells
+  int grid = (nCells * MAXATOMS + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
+  int block = THREAD_ATOM_CTA;
+  UnloadForceBuffer<<<grid, block, 0, stream>>>((ForceMsg*)  gpu_buf /*buf*/, nCells, cellList, s->gpu, natoms_buf);
+  cudaDeviceSynchronize();
   CUDA_GET_LAST_ERROR
   
 }

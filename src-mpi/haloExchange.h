@@ -185,12 +185,12 @@ typedef struct ForceExchangeParmsSt
    int* recvCellsGpu[6]; //!< GPU List of link cells to recv for each face.
    int* natoms_buf[6];    // temp buf for scan result
    int* partial_sums[6];  // partial sums for scan
-#if USE_ASYNC
+
    int* natoms_buf_send[6];    // temp buf for scan result
    int* natoms_buf_recv[6];
    int* partial_sums_send[6];    // temp buf for scan result
    int* partial_sums_recv[6];
-#endif
+
 } ForceExchangeParms;
 
 #endif

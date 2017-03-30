@@ -106,15 +106,16 @@ int main(int argc, char** argv)
   // set active device (assuming homogenous config)
   int my_rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+  //Required by topology, even if comm is not used at all!
   int deviceId = comm_set_device(my_rank); //getMyRank() % numGpus;
   SetupGpu(deviceId);
 #else
    SetupGpu(0);
 #endif
 
-   #ifdef USE_ASYNC
-   comm_init(MPI_COMM_WORLD);
-   #endif
+  if(comm_use_comm())
+    comm_init(MPI_COMM_WORLD);
 
    SimFlat* sim = initSimulation(cmd);
    printSimulationDataYaml(yamlFile, sim);
