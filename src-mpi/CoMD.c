@@ -61,6 +61,7 @@
 #include "constants.h"
 
 #include "gpu_utility.h"
+#include "comm.h"
 
 #define REDIRECT_OUTPUT 0
 #define   MIN(A,B) ((A) < (B) ? (A) : (B))
