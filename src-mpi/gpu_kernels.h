@@ -35,23 +35,18 @@ int loadAtomsBufferFromGpu_Async(char * sendBuf, int * sendSize,
                           int * d_workScan, real3_old shift, cudaStream_t stream, int type);
 
 int loadAtomsBufferFromGpu_Comm(char * sendBuf, int * sendSize,
-                          char* d_compactAtoms, int nCells, 
-                          int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, 
+                          char* d_compactAtoms, int nCells,
+                          int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets,
                           int * d_workScan, real3_old shift, cudaStream_t stream, int type);
-
 
 int unloadAtomsBufferToGpu_Async(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem); //cudaStream_t stream2,  cudaEvent_t * event_copy)
 int unloadAtomsBufferToGpu_Comm(char *buf, int sendSize, SimFlat *sim, char *gpu_buf, cudaStream_t stream, int typeMem); //cudaStream_t stream2,  cudaEvent_t * event_copy)
 
-void loadForceBufferFromGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, 
-  SimFlat *s, char *gpu_buf, cudaStream_t stream);
-void loadForceBufferFromGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, 
-  SimFlat *s, char *gpu_buf, cudaStream_t stream);
+void loadForceBufferFromGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream);
+void loadForceBufferFromGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream);
 
-void unloadForceBufferToGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, 
-  int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type);
-void unloadForceBufferToGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, 
-  int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type);
+void unloadForceBufferToGpu_Async(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type);
+void unloadForceBufferToGpu_Comm(char *buf, int bufSize, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream, int type);
 
 void unloadForceScanCells(int nCells, int *cellList, int *natoms_buf, 
   int *partial_sums, SimFlat *s, cudaStream_t stream);

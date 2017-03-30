@@ -61,10 +61,9 @@ extern "C"
 {
 #include "parallel.h"
 
-#ifdef USE_ASYNC
-  #include "mp.h"
-  #include "comm_ki.cuh"
-#endif
+//Async
+#include "mp.h"
+#include "comm_ki.cuh"
 
 }
 
