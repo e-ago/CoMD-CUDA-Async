@@ -158,20 +158,20 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
    maxSize = MAX(size1, size2);
    hh->bufCapacity = maxSize*2*MAXATOMS*sizeof(AtomMsg);
    
+   hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
+   hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
+   hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
+   hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
+
+   // pin memory
+   cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
+   cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
+   cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
+   cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
+   
    // -----------------------------
    if(comm_use_comm())
    {
-      hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
-      hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
-      hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
-      hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
-
-      // pin memory
-      cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
-      cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
-      cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
-      cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
-
       int sendSize =  SIZE_BYTES+hh->bufCapacity;
       int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
@@ -313,21 +313,20 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    int maxSize = MAX(size0, size1);
    maxSize = MAX(size1, size2);
    hh->bufCapacity = (maxSize)*MAXATOMS*sizeof(ForceMsg);
+   hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
+   hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
+   hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
+   hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
+   
+   // pin memory
+   cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
+   cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
+   cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
+   cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
 
 // -----------------------------
    if(comm_use_comm())
    {
-      hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
-      hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
-      hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
-      hh->recvBufM = (char*)comdMalloc(hh->bufCapacity);
-
-      // pin memory
-      cudaHostRegister(hh->sendBufM, hh->bufCapacity, 0);
-      cudaHostRegister(hh->sendBufP, hh->bufCapacity, 0);
-      cudaHostRegister(hh->recvBufP, hh->bufCapacity, 0);
-      cudaHostRegister(hh->recvBufM, hh->bufCapacity, 0);
-
       int sendSize =  SIZE_BYTES+hh->bufCapacity;
       int recvSize =  SIZE_BYTES+hh->bufCapacity;
 
