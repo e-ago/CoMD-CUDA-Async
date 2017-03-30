@@ -77,9 +77,15 @@ static void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iA
    int * sendSizeM, int * sendSizeP,  int * recvSizeM,  int * recvSizeP);
 
 //ASYNC
+static void exchangeData_Atom_Comm(HaloExchange* haloExchange, void* data, int iAxis, 
+   comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests, int type);
 static void exchangeData_Atom_Async(HaloExchange* haloExchange, void* data, int iAxis, 
    comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests, int type);
 
+static void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis, 
+   comm_request_t * recv_requests,
+   comm_request_t * send_requests,
+   comm_request_t * ready_requests, int * sM, int* sP, int* rM, int* rP, int type);
 static void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis, 
    comm_request_t * recv_requests,
    comm_request_t * send_requests,
