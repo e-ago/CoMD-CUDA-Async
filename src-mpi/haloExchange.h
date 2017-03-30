@@ -6,10 +6,7 @@
 
 #include "mytype.h"
 #include <cuda_runtime.h>
-
-#ifdef USE_ASYNC
 #include "comm.h"
-#endif
 
 struct AtomsSt;
 struct LinkCellSt;
@@ -117,8 +114,6 @@ typedef struct HaloExchangeSt
    char *recvBufP;
    char *recvBufM;
 
-#ifdef USE_ASYNC
-
    char ** sendBufM_Async;
    char ** sendBufP_Async;
    char ** recvBufP_Async;
@@ -146,7 +141,6 @@ typedef struct HaloExchangeSt
 
    int * updateNeighborListRequired;
 */
-#endif
 
 } HaloExchange;
 
