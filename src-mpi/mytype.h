@@ -6,13 +6,17 @@
 
 /// \def SINGLE determines whether single or double precision is built
 #ifdef COMD_SINGLE
+
 typedef float real_t;  //!< define native type for CoMD as single precision
-  #define FMT1 "%g"    //!< /def format argument for floats 
-  #define EMT1 "%e"    //!< /def format argument for eng floats
+#define FMT1 "%g"    //!< /def format argument for floats 
+#define EMT1 "%e"    //!< /def format argument for eng floats
+
 #else
+
 typedef double real_t; //!< define native type for CoMD as double precision
-  #define FMT1 "%lg"   //!< \def format argument for doubles 
-  #define EMT1 "%le"   //!< \def format argument for eng doubles 
+#define FMT1 "%lg"   //!< \def format argument for doubles 
+#define EMT1 "%le"   //!< \def format argument for eng doubles 
+
 #endif
 
 typedef real_t real3_old[3]; //!< a convenience vector with three real_t 

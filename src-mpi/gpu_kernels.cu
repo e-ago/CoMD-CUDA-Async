@@ -64,7 +64,6 @@ extern "C"
 //Async
 #include "mp.h"
 #include "comm_ki.cuh"
-
 }
 
 extern "C"
