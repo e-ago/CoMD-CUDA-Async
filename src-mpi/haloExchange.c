@@ -156,6 +156,8 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
    maxSize = MAX(size1, size2);
    hh->bufCapacity = maxSize*2*MAXATOMS*sizeof(AtomMsg);
    
+   // -----------------------------
+
    hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
    hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
    hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
@@ -217,54 +219,7 @@ HaloExchange* initAtomHaloExchange(Domain* domain, LinkCell* boxes)
    hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
 
-#if 0
-   cudaEventCreate(&(hh->event_copy[0]));
-   cudaEventCreate(&(hh->event_copy[1]));
-   cudaEventCreate(&(hh->event_copy[2]));
-   cudaEventCreate(&(hh->event_copy[3]));
-   cudaEventCreate(&(hh->event_copy[4]));
-   cudaEventCreate(&(hh->event_copy[5]));
-
-   cudaStreamCreateWithFlags(&(hh->stream_copy), cudaStreamNonBlocking);
-#endif
-/*
-   //UPDATE ASYNC
-   int comm_size=getNRanks();
-   hh->updateSend0 = (int**)calloc(3, sizeof(int*));
-   hh->updateRecv0 = (int**)calloc(3, sizeof(int*));
-   
-   hh->updateSend1 = (int**)calloc(3, sizeof(int*));
-   hh->updateRecv1 = (int**)calloc(3, sizeof(int*));
-
-   hh->updateRecvMem0 = (comm_reg_t*)calloc(3, 1*sizeof(comm_reg_t));
-   hh->updateRecvMem1 = (comm_reg_t*)calloc(3, 1*sizeof(comm_reg_t));
-   hh->updateSendMem0 = (comm_reg_t*)calloc(3, 1*sizeof(comm_reg_t));
-   hh->updateSendMem1 = (comm_reg_t*)calloc(3, 1*sizeof(comm_reg_t));
-
-   
-      for(int index=0; index < 3; index++)
-      {
-           if(getMyRank() == 0)
-            printf("initAtom index: %d, comm_size=%d\n", index, comm_size );
-
-         CUDACHECK( cudaMallocHost((void**)&(hh->updateSend0[index]), comm_size*sizeof(int)) );
-         CUDACHECK( cudaMallocHost((void**)&(hh->updateRecv0[index]), comm_size*sizeof(int)) );
-
-         comm_register(hh->updateRecv0[index], comm_size*sizeof(int), &(hh->updateRecvMem0[index]));
-         comm_register(hh->updateSend0[index], comm_size*sizeof(int), &(hh->updateSendMem0[index]));
-
-
-         CUDACHECK( cudaMallocHost((void**)&(hh->updateSend1[index]), comm_size*sizeof(int)) );
-         CUDACHECK( cudaMallocHost((void**)&(hh->updateRecv1[index]), comm_size*sizeof(int)) );
-         
-         comm_register(hh->updateRecv1[index], comm_size*sizeof(int), &(hh->updateRecvMem1[index]));
-         comm_register(hh->updateSend1[index], comm_size*sizeof(int), &(hh->updateSendMem1[index]));
-
-         cudaMalloc((void**)&(hh->updateNeighborListRequired), sizeof(int));
-         cudaMemset(hh->updateNeighborListRequired, 0, sizeof(int));
-     
-      }
-*/
+// -----------------------------
 
    hh->loadBuffer = loadAtomsBuffer;
    hh->unloadBuffer = unloadAtomsBuffer;
@@ -355,6 +310,8 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    maxSize = MAX(size1, size2);
    hh->bufCapacity = (maxSize)*MAXATOMS*sizeof(ForceMsg);
 
+// -----------------------------
+
    hh->sendBufM = (char*)comdMalloc(hh->bufCapacity);
    hh->sendBufP = (char*)comdMalloc(hh->bufCapacity);
    hh->recvBufP = (char*)comdMalloc(hh->bufCapacity);
@@ -411,11 +368,12 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[1]), sendSize));
    CUDACHECK(cudaMalloc((void**)&(hh->d_sendBufP_Async[2]), sendSize));
 
-
    hh->regSendM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regSendP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regRecvM = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));
    hh->regRecvP = (comm_reg_t*)calloc(3, /* num recvs */3*sizeof(comm_reg_t));   
+
+// -----------------------------
 
    ForceExchangeParms* parms = (ForceExchangeParms*)comdMalloc(sizeof(ForceExchangeParms));
 
@@ -475,12 +433,12 @@ void destroyHaloExchange(HaloExchange** haloExchange)
    free(*haloExchange);
    *haloExchange = NULL;
 }
+
 static int sizeMsgM[3];
 static int sizeMsgP[3];
 static int sizeMsgIndex=0;
 static int sizeMsgIndexP=0;
 static int sizeMsgIndexM=0;
-
 static int typeAtomExchange=0;
 
 void haloExchange(HaloExchange* haloExchange, void* data)
@@ -512,15 +470,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
    if(haloExchange->type == 0)
    {
       AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
-      /*
-      comm_request_t  update_recv_requests0[48];
-      comm_request_t  update_send_requests0[48];
-      comm_request_t  update_recv_requests1[48];
-      comm_request_t  update_send_requests1[48];
-
-      int updateRecvReqsIndex=0;
-      int updateSendReqsIndex=0;
-      */
+      
       for (int iAxis=0; iAxis<3; ++iAxis)
       {
          faceM = (enum HaloFaceOrder)(2*iAxis);
@@ -534,11 +484,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
          recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
          recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
-         /*
-         if(getMyRank() == 0)
-            printf("iAxis: %d, nbrRankP: %d (req=%d), nbrRankM: %d (req=%d), nCellsM: %d, nCellsP: %d\n", 
-               iAxis, nbrRankP, (2*iAxis), nbrRankM, (2*iAxis)+1, nCellsM, nCellsP);
-         */
+        
          if(getMyRank() != nbrRankP)
          {
             comm_irecv(recvBufP,
@@ -564,26 +510,6 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
       //That's for communication timers comparison!
       //cudaDeviceSynchronize();
       startTimer(commHaloTimer);
-#if 0
-      if(
-         (sizeMsgM[0] != 0 && sizeMsgM [1] != 0 && sizeMsgM[2] != 0 &&
-         sizeMsgP[0] != 0 && sizeMsgM [1] != 0 && sizeMsgP[2] != 0) 
-      )
-      {
-         if(getMyRank() == 0)
-            printf("\nFIRST TYPE EXCHANGE ATOM\n");
-
-         for (int iAxis=0; iAxis<3; ++iAxis)
-            exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis), 
-                                    send_requests+(2*iAxis), ready_requests+(2*iAxis), 0);
-
-         for (int iAxis=0; iAxis<3; ++iAxis)
-            exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis), 
-                                    send_requests+(2*iAxis), ready_requests+(2*iAxis), 1);      
-      }
-      else
-      {
-#endif
 
       if(comm_use_async())
       {
@@ -591,7 +517,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
             exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis),
                               send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);      
       }
-      else if(comm_use_comm()))
+      else if(comm_use_comm())
       {
          for (int iAxis=0; iAxis<3; ++iAxis)
             exchangeData_Atom_Comm(haloExchange, data, iAxis, recv_requests+(2*iAxis),
@@ -623,15 +549,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
          recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
          recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
-         
-         //recvBufP = (char*)haloExchange->d_recvBufP_Async[iAxis];
-         //recvBufM = (char*)haloExchange->d_recvBufM_Async[iAxis];
 
-         #if 0
-         if(getMyRank() == 0)
-            printf("iAxis: %d, nbrRankP: %d (req=%d), nbrRankM: %d (req=%d)\n", 
-               iAxis, nbrRankP, (2*iAxis), nbrRankM, (2*iAxis)+1);
-         #endif
          sendSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
          sendSizeP[iAxis] = sizeMsgP[sizeMsgIndexP]*sizeof(ForceMsg);
          recvSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
@@ -700,10 +618,6 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
       for (int iAxis=0; iAxis<3; ++iAxis)
       {
-         #if 0
-         if(getMyRank() == 0)
-            printf("Start iAxis: %d\n", iAxis);
-         #endif
          if (comm_use_comm() && comm_use_gpu_comm())
          {
             exchangeData_Force_KI(haloExchange, data, iAxis, 
@@ -723,14 +637,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
                sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
          }
       }
-#if 0
-      for (int iAxis=0; iAxis<3; ++iAxis)
-      {
-         exchangeData_Force_Async(haloExchange, data, iAxis, 
-            recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-            sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 1);        
-      }
-#endif
+
       //That's for communication timers comparison!
       //cudaDeviceSynchronize();
       stopTimer(commHaloTimer);

@@ -28,7 +28,6 @@ void emptyNeighborListGpu(SimGpu * sim, int boundaryFlag);
 
 int compactCellsGpu(char* work_d, int nCells, int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, int * d_workScan, real3_old shift, cudaStream_t stream);
 
-#ifdef USE_ASYNC
 int loadAtomsBufferFromGpu_Async(char * sendBuf, int * sendSize,
                           char* d_compactAtoms, int nCells, 
                           int *d_cellList, SimGpu sim_gpu, int* d_cellOffsets, 
@@ -65,8 +64,6 @@ void exchangeDataForceGpu_KI(
   int *partial_sums_sendM, int *partial_sums_sendP, int *partial_sums_recvM, int *partial_sums_recvP,
   cudaStream_t stream, int iAxis, int rankM, int rankP);
 
-#endif
-
 void unloadAtomsBufferToGpu(char *buf, int nBuf, SimFlat *s, char *gpu_buf, cudaStream_t stream);
 void loadForceBufferFromGpu(char *buf, int *nbuf, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream);
 void unloadForceBufferToGpu(char *buf, int nBuf, int nCells, int *cellList, int *natoms_buf, int *partial_sums, SimFlat *s, char *gpu_buf, cudaStream_t stream);
@@ -96,4 +93,5 @@ void emptyHashTableGpu(HashTableGpu* hashTable);
 #ifdef __cplusplus
 }
 #endif
+
 #endif
