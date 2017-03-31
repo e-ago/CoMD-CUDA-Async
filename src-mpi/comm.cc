@@ -142,6 +142,12 @@ int comm_init(MPI_Comm comm, int gpuId)
 {
     int i, j;
 
+    if(gpuId < 0)
+    {
+        printf("ERROR: Wrong GPU ID (%d) \n", gpuId);
+        return -1;
+    }
+
     MPI_Comm_size (comm, &comm_size);
     MPI_Comm_rank (comm, &comm_rank);
 
@@ -164,10 +170,8 @@ int comm_init(MPI_Comm comm, int gpuId)
     DBG("n_peers=%d\n", n_peers);
 
     //CUDA context initialization
-    //cudaFree(0);
-    comm_gpu_id=gpuId;
-    mp_setup_gpu_id(comm_gpu_id);
-    MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT));
+    cudaFree(0);
+    MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT, gpuId));
 
 #if 0
     // init ready stuff
