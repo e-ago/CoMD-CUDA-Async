@@ -11,7 +11,13 @@ function run() {
     (
 
         echo; echo; \
-        mpirun  \
+
+        extra_params="$extra_params --mca btl openib,self"
+        extra_params="$extra_params --mca btl_openib_want_cuda_gdr 1"
+        extra_params="$extra_params --mca btl_openib_warn_default_gid_prefix 0"
+        extra_params="$extra_params --mca btl_openib_verbose 1"
+
+        mpirun $extra_params \
         \
         -x ASYNC_USE_ASYNC=0 \
         -x ASYNC_ENABLE_DEBUG=0 \
@@ -36,7 +42,7 @@ function run() {
         -x GDS_DISABLE_INLINECOPY=0       \
         -x GDS_DISABLE_WEAK_CONSISTENCY=0 \
         -x GDS_DISABLE_MEMBAR=0         \
-    --mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 $PREFIX/src/scripts/wrapper.sh $PREFIX/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
+        --map-by node  -np $NP $PREFIX/src/scripts/wrapper.sh $PREFIX/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
 
 #--mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh  nvprof -o nvprof-async16.%q{OMPI_COMM_WORLD_RANK}.nvprof /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
 #nvprof -o nvprof-kernel.%q{OMPI_COMM_WORLD_RANK}.nvprof
@@ -73,6 +79,7 @@ echo "CWD=$PWD"
 #run 0 0 1 1 8 -e -i 8 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_8proc_8x_40.txt
 #run 0 0 1 1 16 -e -i 16 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_16proc_16x_40.txt
 
+#run $1 $2 $3 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80
 #MPI test
 run 0 0 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 # &> out_2proc_2x_80.txt
 #Comm Sync test
