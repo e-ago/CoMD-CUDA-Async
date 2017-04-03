@@ -111,6 +111,7 @@ int main(int argc, char** argv)
 
   //Required by topology, even if comm is not used at all!
   deviceId = comm_select_device(my_rank); //getMyRank() % numGpus;
+  //CUDA_VISIBLE_DEVICES required by CoMD
   SetupGpu(deviceId);
   if(comm_use_comm())
     comm_init(MPI_COMM_WORLD, deviceId);

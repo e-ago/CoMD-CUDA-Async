@@ -777,7 +777,7 @@ int comm_select_device(int mpiRank)
     char * value = getenv("USE_GPU"); 
     if (value != NULL) {
         gpuId = atoi(value);
-        //DBG("USE_GPU: %d\n", gpuId);
+        //printf("USE_GPU set to %d\n", gpuId);
     }
     else
     {
