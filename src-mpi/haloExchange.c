@@ -422,6 +422,13 @@ HaloExchange* initForceHaloExchange(Domain* domain, LinkCell* boxes, int useGPU)
    hh->hashTable = NULL;
    hh->type = 1;
    hh->parms = parms;
+
+
+   int myRank=0, myGPU=0;                                                                                 
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);                                                                
+  cudaGetDevice(&myGPU);                                                                                
+  fprintf(stderr, "Rank %d, GPU: %d, in file %s at line %d\n", myRank, myGPU, __FILE__, __LINE__);
+
    return hh;
 }
 
