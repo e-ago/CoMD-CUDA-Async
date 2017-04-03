@@ -129,9 +129,9 @@ void SetBoundaryCells(SimFlat *flat, HaloExchange *hh)
   }
 
   // allocate on GPU
-  CUDA_CHECK(cudaMalloc((void**)&flat->boundary1_cells_d, n_boundary1_cells * sizeof(int)));
-  CUDA_CHECK(cudaMalloc((void**)&flat->boundary_cells, n_boundary_cells * sizeof(int)));
-  CUDA_CHECK(cudaMalloc((void**)&flat->interior_cells, n_interior_cells * sizeof(int)));
+  CUDA_CHECK_RANK(cudaMalloc((void**)&flat->boundary1_cells_d, n_boundary1_cells * sizeof(int)));
+  CUDA_CHECK_RANK(cudaMalloc((void**)&flat->boundary_cells, n_boundary_cells * sizeof(int)));
+  CUDA_CHECK_RANK(cudaMalloc((void**)&flat->interior_cells, n_interior_cells * sizeof(int)));
 
   // copy to GPU  
   CUDA_CHECK(cudaMemcpy(flat->boundary1_cells_d, flat->boundary1_cells_h, n_boundary1_cells * sizeof(int), cudaMemcpyHostToDevice));

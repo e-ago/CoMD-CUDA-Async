@@ -68,9 +68,27 @@ void cudaCopyDtH(void* dst, const void* src, int size);
 
 int compactHaloCells(SimFlat* sim, char* h_compactAtoms, int* h_cellOffset);
 
+#define CUDA_CHECK_RANK(command)                     \
+{                           \
+  cudaDeviceSynchronize(); \
+  cudaError_t status = (command);                                                                         \
+  if (status != cudaSuccess) {                                                                            \
+    int myRank=0, myGPU=0;                                                                                 \
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);                                                                 \
+    cudaGetDevice(&myGPU);                                                                                  \
+    fprintf(stderr, "Rank %d, GPU: %d, Error in file %s at line %d\n", myRank, myGPU, __FILE__, __LINE__);  \
+    fprintf(stderr, "CUDA error %d: %s", status, cudaGetErrorString(status));                               \
+    fprintf(stderr, "\n");                                                                                  \
+    exit(-1);                                                                                               \
+  }                                                                                                             \
+}
+
+
 #define CUDA_CHECK(command)											\
 {														\
-  cudaDeviceSynchronize(); \
+  CUDA_CHECK_RANK(command); \
+}
+/*  cudaDeviceSynchronize(); \
   cudaError_t status = (command);                                                                      		\
   if (status != cudaSuccess) {                                                                                  \
     fprintf(stderr, "Error in file %s at line %d\n", __FILE__, __LINE__);                                  	\
@@ -79,6 +97,7 @@ int compactHaloCells(SimFlat* sim, char* h_compactAtoms, int* h_cellOffset);
     exit(-1);                                                                                              	\
   }                                                                                                             \
 }
+*/
 
 #ifdef DEBUG
 #ifdef DO_MPI
