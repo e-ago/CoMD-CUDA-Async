@@ -132,7 +132,6 @@ void SetBoundaryCells(SimFlat *flat, HaloExchange *hh)
   int myRank=0, myGPU=0;                                                                                 
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);                                                                
   cudaGetDevice(&myGPU);                                                                                
-  fprintf(stderr, "Rank %d, GPU: %d, before malloc in file %s at line %d\n", myRank, myGPU, __FILE__, __LINE__);
   
   // allocate on GPU
   CUDA_CHECK_RANK(cudaMalloc((void**)&flat->boundary1_cells_d, n_boundary1_cells * sizeof(int)));
