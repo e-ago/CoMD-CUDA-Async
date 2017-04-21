@@ -176,13 +176,15 @@ int comm_init(MPI_Comm comm, int gpuId)
 #if 0
     // init ready stuff
     size_t table_size = MAX(sizeof(*ready_table) * comm_size, PAGE_SIZE);
-    ready_table = (uint32_t *)memalign(PAGE_SIZE, table_size);
+    ready_table = (uint32_t *)posix_memalign(PAGE_SIZE, table_size);
+//    cudaMallocHost((void**)&(ready_table), table_size);
     assert(ready_table);
 
     ready_values = (uint32_t *)malloc(table_size);
     assert(ready_values);
 
-    remote_ready_values = (uint32_t *)memalign(PAGE_SIZE, table_size);
+    remote_ready_values = (uint32_t *)posix_memalign(PAGE_SIZE, table_size);
+//    cudaMallocHost((void**)&(remote_ready_values), table_size);
     assert(remote_ready_values);
     
     for (i=0; i<comm_size; ++i) {
@@ -192,15 +194,11 @@ int comm_init(MPI_Comm comm, int gpuId)
     }
     iomb();
 
-
-    if(comm_rank == 0)
-    printf("registering ready_table size=%d\n", table_size);
+    DBG("registering ready_table size=%d\n", table_size);
     MP_CHECK(mp_register(ready_table, table_size, &ready_table_reg));
-    if(comm_rank == 0)
-    printf("creating ready_table window\n");
+    DBG("creating ready_table window\n");
     MP_CHECK(mp_window_create(ready_table, table_size, &ready_table_win));
-    if(comm_rank == 0)
-    printf("registering remote_ready_table\n");
+    DBG("registering remote_ready_table\n");
     MP_CHECK(mp_register(remote_ready_values, table_size, &remote_ready_values_reg));
 #endif
     
