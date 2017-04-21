@@ -54,47 +54,31 @@ set -x
 
 echo "CWD=$PWD"
 
-# inlcopy seems to be worse if S==1024, better if S==0
 #run 1 0 0 0 2 -e -x 16 -y 16 -z 16 -i 2 -m thread_atom_nl $@ &> out_2proc_2x_16384.txt
-
-#run 1 0 0 0 2 -e -x 98 -y 49 -z 49 -i 2 -m thread_atom_nl $@ &> out_2proc_2x.txt
-#run 1 0 0 0 4 -e -x 98 -y 49 -z 49 -i 4 -m thread_atom_nl $@ &> out_4proc_4x.txt
-#run 1 0 0 0 4 -e -x 98 -y 49 -z 49 -i 2 -j 2 -m thread_atom_nl $@ &> out_4proc_2x_2y.txt
-#run 1 0 0 0 8 -e -x 98 -y 49 -z 49 -i 8 -m thread_atom_nl $@ &> out_8proc_8x.txt
-#run 1 0 0 0 8 -e -x 98 -y 49 -z 49 -i 2 -j 2 -k 2 -m thread_atom_nl $@ &> out_8proc_2x_2y_2z.txt
-#run 1 0 0 0 16 -e -x 198 -y 99 -z 99 -i 16 -m thread_atom_nl $@ &> out_16proc_16x.txt
-#run 1 0 0 0 16 -e -x 98 -y 49 -z 49 -i 4 -j 4 -m thread_atom_nl $@ &> out_16proc_4x_4y.txt
-
-#run 1 0 0 0 4 -e -x 198 -y 99 -z 99 -i 4 -m thread_atom_nl $@ &> out_4proc_4x_big.txt
-#run 1 0 0 0 8 -e -x 198 -y 99 -z 99 -i 8 -m thread_atom_nl $@ &> out_8proc_8x_big.txt
-#run 1 0 0 0 16 -e -x 198 -y 99 -z 99 -i 4 -j 4 -m thread_atom_nl $@ &> out_16proc_4x_4y_big.txt
 #run 1 0 0 0 16 -e -x 198 -y 99 -z 99 -i 16 -m thread_atom_nl $@ &> out_16proc_16x_big.txt
-
 #run 0 0 1 1 2 -e -i 2 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_2proc_2x_40.txt
-#run 0 0 1 1 4 -e -i 2 -j 2 -k 1 -x 40 -y 40 -z 40 &> out_4proc_2x_2y_40.txt
-#run 0 0 1 1 8 -e -i 2 -j 2 -k 2 -x 40 -y 40 -z 40 &> out_8proc_2x_2y_2z_40.txt
-#run 0 0 1 1 16 -e -i 4 -j 2 -k 2 -x 40 -y 40 -z 40 &> out_16proc_4x_2y_2z_40.txt
-
-#run 0 0 1 1 4 -e -i 4 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_4proc_4x_40.txt
-#run 0 0 1 1 8 -e -i 8 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_8proc_8x_40.txt
-#run 0 0 1 1 16 -e -i 16 -j 1 -k 1 -x 40 -y 40 -z 40 &> out_16proc_16x_40.txt
-
-#run $1 $2 $3 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80
-#MPI test
-run 0 0 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 # &> out_2proc_2x_80.txt
-#Comm Sync test
-run 1 0 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80
-#Comm Async test
-run 1 1 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80
-#Comm GPU test
-run 1 1 1 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80
-
-#run 0 0 1 1 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80 &> out_4proc_2x_2y_80.txt
-#run 0 0 1 1 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_8proc_2x_2y_2z_80.txt
-#run 0 0 1 1 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_16proc_4x_2y_2z_80_debug_comm.txt
-
 #run 0 0 1 1 32 -e -i 4 -j 4 -k 2 -x 80 -y 80 -z 80 &> out_32proc_4x_4y_2z_80_comm.txt
-#run 0 0 1 1 4 -e -i 4 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_4proc_4x_80.txt
-#run 0 0 1 1 8 -e -i 8 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_8proc_8x_80.txt
-#run 0 0 1 1 16 -e -i 16 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_16proc_16x_80.txt
 
+#MPI test
+run 0 0 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80  &> out_2proc_80_mpi.txt
+run 0 0 0 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80  &> out_4proc_80_mpi.txt
+#run 0 0 0 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80  &> out_8proc_80_mpi.txt
+#run 0 0 0 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80  &> out_16proc_80_mpi.txt
+
+#Comm Sync test
+run 1 0 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_2proc_80_sync.txt
+run 1 0 0 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80 &> out_4proc_80_sync.txt
+#run 1 0 0 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_8proc_80_sync.txt
+#run 1 0 0 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_16proc_80_sync.txt
+
+#Comm Async test
+run 1 1 0 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_2proc_80_async.txt
+run 1 1 0 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80 &> out_4proc_80_async.txt
+#run 1 1 0 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_8proc_80_async.txt
+#run 1 1 0 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80 &> out_16proc_80_async.txt
+
+#Comm GPU test
+run 1 1 1 2 -e -i 2 -j 1 -k 1 -x 80 -y 80 -z 80 &> out_2proc_80_gpu.txt
+run 1 1 1 4 -e -i 2 -j 2 -k 1 -x 80 -y 80 -z 80 &> out_4proc_80_gpu.txt
+#run 1 1 1 8 -e -i 2 -j 2 -k 2 -x 80 -y 80 -z 80 &> &> out_8proc_80_gpu.txt
+#run 1 1 1 16 -e -i 4 -j 2 -k 2 -x 80 -y 80 -z 80 &> &> out_16proc_80_gpu.txt
