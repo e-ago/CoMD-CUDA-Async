@@ -116,6 +116,14 @@ int main(int argc, char** argv)
   if(comm_use_comm())
     comm_init(MPI_COMM_WORLD, deviceId);
 
+  #ifdef COMMUNICATION_TIMERS
+  if(my_rank == 0)
+    printf("\n=== You're measuring communication periods time ===\n");
+  #else
+  if(my_rank == 0)
+    printf("\n=== You're measuring overall execution time ===\n");
+  #endif
+
 #else
    SetupGpu(0);
 #endif
