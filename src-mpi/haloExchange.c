@@ -656,6 +656,12 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
       if (comm_use_comm() && (comm_use_async() || comm_use_gpu_comm()) )
          comm_progress();
+      else
+      {
+         comm_wait_all(6, recv_requests);
+         comm_wait_all(6, send_requests);
+//         comm_wait_all(6, ready_requests);
+      }
    }
 }
 
