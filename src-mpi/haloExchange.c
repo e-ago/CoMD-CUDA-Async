@@ -1225,7 +1225,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
                                     sim->boundary_stream);
 
          }
-* /
+      */
          loadForceBufferFromGpu_Async(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
                                        parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
                                        sim, sim->gpu_force_buf, sim->boundary_stream);
