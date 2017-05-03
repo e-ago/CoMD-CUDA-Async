@@ -848,9 +848,7 @@ void exchangeData_Atom_Comm(
                   &send_requests[1]);
 
      //-------- Wait recv on stream
-      comm_wait_all(2, recv_requests);
-      comm_wait_all(2, send_requests);
-
+      comm_flush();
       POP_RANGE;
    }
 
