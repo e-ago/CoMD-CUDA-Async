@@ -452,7 +452,8 @@ void haloExchange(HaloExchange* haloExchange, void* data)
    if(comm_use_comm())
    {
       haloExchange_comm(haloExchange, data);
-      comm_flush();
+      if(comm_use_async() || comm_use_gpu_comm())
+         comm_flush();
    }
    else //MPI
       haloExchange_MPI(haloExchange, data);
