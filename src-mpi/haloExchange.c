@@ -1106,8 +1106,8 @@ void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis,
                                     sim, sim->boundary_stream);
       PUSH_RANGE("UNLOAD", 4);
       //-------- Wait recv on stream
-
-      comm_wait_all(2, recv_requests);
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all(2, recv_requests);
 
       //-------- Unload P
       unloadForceBufferToGpu_Comm(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
@@ -1119,7 +1119,8 @@ void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis,
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
       
-      comm_wait_all(2, send_requests);
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all(2, send_requests);
 
       POP_RANGE;
    }    
