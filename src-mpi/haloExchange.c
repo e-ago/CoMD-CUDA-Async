@@ -851,11 +851,8 @@ void exchangeData_Atom_Comm(
                   &send_requests[1]);
 
      //-------- Wait recv on stream
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, recv_requests);
-
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, send_requests);
+      comm_wait_all(2, recv_requests);
+      comm_wait_all(2, send_requests);
 
       POP_RANGE;
    }
@@ -980,11 +977,7 @@ void exchangeData_Atom_Async(
                            sim->boundary_stream);
 
       //-------- Wait recv on stream
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
-
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+      comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
 
       POP_RANGE;
    }
@@ -993,6 +986,10 @@ void exchangeData_Atom_Async(
    unloadAtomsBufferToGpu_Async(recvBufM, sizeMsgM[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeM); //haloExchange->stream_copy, , haloExchange->event_copy);     /*sizeMsgP[sizeMsgIndexP] = */ //sizeMsgIndexP++;
    //-------- Unload P
    unloadAtomsBufferToGpu_Async(recvBufP, sizeMsgP[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeP); //haloExchange->stream_copy, typeP, haloExchange->event_copy);
+
+   if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+      comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+
 }
 
 void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis, 
@@ -1110,8 +1107,7 @@ void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis,
       PUSH_RANGE("UNLOAD", 4);
       //-------- Wait recv on stream
 
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, recv_requests);
+      comm_wait_all(2, recv_requests);
 
       //-------- Unload P
       unloadForceBufferToGpu_Comm(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
@@ -1123,8 +1119,7 @@ void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis,
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
       
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, send_requests);
+      comm_wait_all(2, send_requests);
 
       POP_RANGE;
    }    
