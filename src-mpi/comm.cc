@@ -546,6 +546,9 @@ int comm_flush()
     int ret = 0;
     DBG("n_reqs=%d\n", n_reqs);
     assert(n_reqs < MAX_REQS);
+    if(n_reqs == 0)
+        return ret;
+    
 #if 0
     do {
         rmb();
