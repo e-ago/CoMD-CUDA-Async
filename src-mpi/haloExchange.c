@@ -854,6 +854,9 @@ void exchangeData_Atom_Comm(
       if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
          comm_wait_all(2, recv_requests);
 
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all(2, send_requests);
+
       POP_RANGE;
    }
 
@@ -979,6 +982,9 @@ void exchangeData_Atom_Async(
       //-------- Wait recv on stream
       if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
          comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
+
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
 
       POP_RANGE;
    }
@@ -1116,7 +1122,9 @@ void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis,
       unloadForceBufferToGpu_Comm(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
-   
+      
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all(2, send_requests);
 
       POP_RANGE;
    }    
@@ -1289,7 +1297,12 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
        //-------- Unload M
       unloadForceBufferToGpu_Async(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
-                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
+                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeM);  
+
+
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+
       POP_RANGE;
    }    
 }
@@ -1403,6 +1416,10 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
                                     /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
                                     sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
    
+
+      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+         comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+
       POP_RANGE;
    }
 }
