@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 function run() {
     local A=$1
@@ -9,15 +9,14 @@ function run() {
     local PAR=$@
     date
     (
-
         echo; echo; \
 
-        extra_params="$extra_params --mca btl openib,self"
-        extra_params="$extra_params --mca btl_openib_want_cuda_gdr 1"
-        extra_params="$extra_params --mca btl_openib_warn_default_gid_prefix 0"
-        extra_params="$extra_params --mca btl_openib_verbose 1"
+        OMPI_params="$OMPI_params --mca btl openib,self"
+        OMPI_params="$OMPI_params --mca btl_openib_want_cuda_gdr 1"
+        OMPI_params="$OMPI_params --mca btl_openib_warn_default_gid_prefix 0"
+        OMPI_params="$OMPI_params --mca btl_openib_verbose 1"
 
-        mpirun $extra_params \
+        $MPI_HOME/bin/mpirun $OMPI_params \
         \
         -x ASYNC_USE_ASYNC=0 \
         -x ASYNC_ENABLE_DEBUG=0 \
@@ -42,11 +41,9 @@ function run() {
         -x GDS_DISABLE_INLINECOPY=0       \
         -x GDS_DISABLE_WEAK_CONSISTENCY=0 \
         -x GDS_DISABLE_MEMBAR=0         \
-        --map-by node  -np $NP $PREFIX/src/scripts/wrapper.sh $PREFIX/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
-
-#--mca btl_openib_want_cuda_gdr 1 --map-by node  -np $NP -mca btl_openib_warn_default_gid_prefix 0 /home/hpcagos1/peersync/src/scripts/wrapper.sh  nvprof -o nvprof-async16.%q{OMPI_COMM_WORLD_RANK}.nvprof /home/hpcagos1/peersync/src/comd-cuda-async/bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
-#nvprof -o nvprof-kernel.%q{OMPI_COMM_WORLD_RANK}.nvprof
-#../scripts/wrapper.sh ./bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
+         -x CUDA_PASCAL_FORCE_40_BIT=1 \
+        --map-by node  -np $NP ./wrapper.sh ./bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
+        #nvprof -o nvprof-kernel.%q{OMPI_COMM_WORLD_RANK}.nvprof
     date
 }
 
