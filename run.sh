@@ -34,7 +34,6 @@ function run() {
         -x MP_TX_CQ_ON_GPU=0 \
         \
         -x MP_EVENT_ASYNC=0 \
-        -x MP_GUARD_PROGRESS=0 \
         \
         -x GDS_DISABLE_WRITE64=0           \
         -x GDS_SIMULATE_WRITE64=0         \
