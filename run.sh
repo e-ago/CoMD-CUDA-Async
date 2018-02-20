@@ -11,10 +11,10 @@ function run() {
     (
         echo; echo; \
 
-        OMPI_params="$OMPI_params --mca btl openib,self"
-        OMPI_params="$OMPI_params --mca btl_openib_want_cuda_gdr 1"
-        OMPI_params="$OMPI_params --mca btl_openib_warn_default_gid_prefix 0"
-        OMPI_params="$OMPI_params --mca btl_openib_verbose 1"
+	OMPI_params="$OMPI_params --mca btl openib,self"
+	OMPI_params="$OMPI_params --mca btl_openib_want_cuda_gdr 1"
+	OMPI_params="$OMPI_params --mca btl_openib_warn_default_gid_prefix 0"
+	#OMPI_params="$OMPI_params --mca btl_openib_verbose 1"
 
         $MPI_HOME/bin/mpirun $OMPI_params \
         \
@@ -41,7 +41,7 @@ function run() {
         -x GDS_DISABLE_WEAK_CONSISTENCY=0 \
         -x GDS_DISABLE_MEMBAR=0         \
          -x CUDA_PASCAL_FORCE_40_BIT=1 \
-        --map-by node  -np $NP ./wrapper.sh ./bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
+        --map-by node -np $NP -hostfile hostfile ./wrapper.sh ./bin/CoMD-cuda-mpi $PAR ) 2>&1 | tee -a run.log
         #nvprof -o nvprof-kernel.%q{OMPI_COMM_WORLD_RANK}.nvprof
     date
 }
