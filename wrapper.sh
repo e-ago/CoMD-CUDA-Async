@@ -30,7 +30,7 @@ case ${HOSTNAME} in
 	*brdw0*) CUDA_VISIBLE_DEVICES=3; USE_CPU=0; MP_USE_IB_HCA=mlx5_0;;
 	*brdw1*) CUDA_VISIBLE_DEVICES=0; USE_CPU=0; MP_USE_IB_HCA=mlx5_0;;
 	*hsw0*) CUDA_VISIBLE_DEVICES=0; USE_CPU=0; MP_USE_IB_HCA=mlx5_0;;
-	*hsw1*)                         USE_GPU=0; USE_CPU=0; MP_USE_IB_HCA=mlx5_0;;
+	*hsw1*)                         USE_GPU=0; USE_CPU=0; MP_USE_IB_HCA=mlx5_0;
 	;;
 esac
 
