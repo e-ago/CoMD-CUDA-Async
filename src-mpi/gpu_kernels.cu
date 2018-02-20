@@ -709,8 +709,8 @@ int loadAtomsBufferFromGpu_Comm(char * sendBuf, int * sendSize,
 	int * d_workScan, real3_old shift, cudaStream_t stream, int type)
 {
 
-	sendSize[0] = loadAtomsBufferFromGpu_Async(sendBuf, sendSize, d_compactAtoms, nCells, 
-							d_cellList, SimGpu sim_gpu, d_cellOffsets, 
+	sendSize[0] = loadAtomsBufferFromGpu_Async(sendBuf, sendSize, d_compactAtoms, nCells,
+							d_cellList, sim_gpu, d_cellOffsets, 
 							d_workScan, shift, stream, type);
 	
 	cudaDeviceSynchronize();
