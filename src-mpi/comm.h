@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #ifdef __cplusplus
 #include <mp/device.cuh>
 struct comm_dev_descs {
