@@ -447,29 +447,6 @@ static int sizeMsgIndexP=0;
 static int sizeMsgIndexM=0;
 static int typeAtomExchange=0;
 
-void haloExchange(HaloExchange* haloExchange, void* data)
-{  
-	#ifdef COMMUNICATION_TIMERS
-		cudaDeviceSynchronize();
-	#endif
-
-	startTimer(commHaloTimer);
-	if(comm_use_comm())
-	{
-		haloExchange_comm(haloExchange, data);
-		if(comm_use_async() || comm_use_gpu_comm())
-			comm_flush();
-	}
-	else //MPI
-		haloExchange_MPI(haloExchange, data);
-	
-	#ifdef COMMUNICATION_TIMERS
-		cudaDeviceSynchronize();
-	#endif
-	
-	stopTimer(commHaloTimer);
-}
-
 void haloExchange_comm(HaloExchange* haloExchange, void* data)
 {
 	char * recvBufP, * recvBufM;
@@ -674,6 +651,29 @@ void haloExchange_MPI(HaloExchange* haloExchange, void* data)
 {
    for (int iAxis=0; iAxis<3; ++iAxis)
       exchangeData(haloExchange, data, iAxis);
+}
+
+void haloExchange(HaloExchange* haloExchange, void* data)
+{  
+	#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+	#endif
+
+	startTimer(commHaloTimer);
+	if(comm_use_comm())
+	{
+		haloExchange_comm(haloExchange, data);
+		if(comm_use_async() || comm_use_gpu_comm())
+			comm_flush();
+	}
+	else //MPI
+		haloExchange_MPI(haloExchange, data);
+	
+	#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+	#endif
+	
+	stopTimer(commHaloTimer);
 }
 
 /// Base class constructor.
