@@ -530,8 +530,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 		int sendSizeM[3], sendSizeP[3],  recvSizeM[3],  recvSizeP[3]; 
 		comm_dev_descs_t descs = NULL;
 
-		if (comm_use_comm() && comm_use_gpu_comm()) 
-			get_curr_descs_req();
+		// if (comm_use_comm() && comm_use_gpu_comm()) 
+		// 	get_curr_descs_req();
 
 		for (int iAxis=0; iAxis<3; ++iAxis)
 		{
@@ -564,8 +564,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 					nbrRankP,
 					&(recv_requests[(2*iAxis)]));
 
-				if (comm_use_comm() && comm_use_gpu_comm())
-					comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)]));
+				// if (comm_use_comm() && comm_use_gpu_comm())
+				// 	comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)]));
 			}
 
 			if(getMyRank() != nbrRankM)
@@ -577,10 +577,11 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 					nbrRankM,
 					&(recv_requests[(2*iAxis)+1]));
 
-				if (comm_use_comm() && comm_use_gpu_comm())
-					comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)+1]));
+				// if (comm_use_comm() && comm_use_gpu_comm())
+				// 	comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)+1]));
 			}
 
+			#if 0
 			if (comm_use_comm() && comm_use_gpu_comm())
 			{
 				if(getMyRank() != nbrRankM)
@@ -605,9 +606,35 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
 				update_curr_descs_pointer();
 			}
+			#endif
 		}
 
-		MPI_Barrier(MPI_COMM_WORLD);
+		for (int iAxis=0; iAxis<3; ++iAxis)
+		{
+			faceM = (enum HaloFaceOrder)(2*iAxis);
+			faceP = (enum HaloFaceOrder)(faceM+1);
+
+			nbrRankM = haloExchange->nbrRank[faceM];
+			nbrRankP = haloExchange->nbrRank[faceP];
+
+			if(getMyRank() != nbrRankP)
+			{
+				if (comm_use_comm() && comm_use_async())
+					comm_send_ready_on_stream(nbrRankP, &ready_requests[(2*iAxis)], sim->boundary_stream);
+				else if (comm_use_comm())
+					comm_send_ready(nbrRankP, &ready_requests[(2*iAxis)]);
+			}
+
+			if(getMyRank() != nbrRankM)
+			{
+				if (comm_use_comm() && comm_use_async())
+					comm_send_ready_on_stream(nbrRankM, &ready_requests[(2*iAxis)+1], sim->boundary_stream);
+				else if (comm_use_comm())
+					comm_send_ready(nbrRankM, &ready_requests[(2*iAxis)+1]);
+			}
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
 
 		#ifdef COMMUNICATION_TIMERS
 		cudaDeviceSynchronize();
@@ -618,9 +645,10 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 		{
 			if (comm_use_comm() && comm_use_gpu_comm())
 			{
-				exchangeData_Force_KI(haloExchange, data, iAxis, 
-					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP);
+				printf("ERROR: KI model not supported yet\n");
+				// exchangeData_Force_KI(haloExchange, data, iAxis, 
+				// 	recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
+				// 	sendSizeM, sendSizeP,  recvSizeM,  recvSizeP);
 			}
 			else if (comm_use_comm() && comm_use_async())
 			{
@@ -1251,6 +1279,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
 				sim, sim->gpu_force_buf, sim->boundary_stream);
 
+			comm_wait_ready_on_stream(nbrRankM, sim->boundary_stream);
 			comm_isend_on_stream(sendBufM, 
 				sendSizeM[iAxis],
 				MPI_CHAR,
@@ -1267,6 +1296,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 
 
 			//-------- COMPUTE & SEND faceP
+			comm_wait_ready_on_stream(nbrRankP, sim->boundary_stream);
 			comm_isend_on_stream(sendBufP, 
 				sendSizeP[iAxis],
 				MPI_CHAR,
@@ -1311,7 +1341,10 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 			sim, sim->gpu_force_buf, sim->boundary_stream, typeM);  
 
 		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+		{
 			comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+			comm_wait_all_on_stream(2, ready_requests, sim->boundary_stream);
+		}
 
 		POP_RANGE;
 	}    
