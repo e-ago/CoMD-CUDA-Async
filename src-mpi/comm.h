@@ -18,6 +18,8 @@ struct comm_dev_descs {
 #endif
 typedef struct comm_dev_descs *comm_dev_descs_t;
 
+#include <unistd.h>
+extern int mpi_comm_rank;
 
 #define __COMM_CHECK(stmt, cond_str)                    \
     do {                                \
