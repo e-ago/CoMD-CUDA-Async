@@ -34,19 +34,19 @@
 void scan(int *data, int n, int *partial_sums, cudaStream_t stream)
 {
 	size_t temp_size = n+1;
-  	if (temp_size % 256 != 0) temp_size = ((temp_size + 255)/256)*256;    // pad to 256 elements
+	if (temp_size % 256 != 0) temp_size = ((temp_size + 255)/256)*256;    // pad to 256 elements
 	cub::DeviceScan::ExclusiveSum(partial_sums, temp_size, data, data, n, stream);
-#if 0
-
+	
+	#if 0
 	size_t temp_size = n+1;
-//	size_t required_size=0;
+	//	size_t required_size=0;
 
 	if (temp_size % 256 != 0) temp_size = ((temp_size + 255)/256)*256;	// pad to 256 elements
-//	temp_size = temp_size * sizeof(int);
-//  cub::DeviceScan::ExclusiveSum(NULL, required_size, data, data, n, stream);
-//	printf("temp_size: %d, n: %d\n", temp_size, n);
+	//	temp_size = temp_size * sizeof(int);
+	//  	cub::DeviceScan::ExclusiveSum(NULL, required_size, data, data, n, stream);
+	//	printf("temp_size: %d, n: %d\n", temp_size, n);
 	cub::DeviceScan::ExclusiveSum(partial_sums, temp_size, data, data, n, stream);
-#endif
+	#endif
 }
 
 #endif

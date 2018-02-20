@@ -577,6 +577,7 @@ void computeOffsets(int nlUpdateRequired, SimFlat* sim,
                                         int* d_iOffset, int* d_boxId,
                                         int nBuf, cudaStream_t stream)
 {  
+  if (nBuf == 0) return;
   int grid = (nBuf + (THREAD_ATOM_CTA-1)) / THREAD_ATOM_CTA;
   int block = THREAD_ATOM_CTA;
   // computeBoxIds(), compute, ... are required to assure sequential ordering!

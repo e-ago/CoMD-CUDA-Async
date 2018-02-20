@@ -461,206 +461,206 @@ void haloExchange(HaloExchange* haloExchange, void* data)
 
 void haloExchange_comm(HaloExchange* haloExchange, void* data)
 {
-   char * recvBufP, * recvBufM;
-   enum HaloFaceOrder faceM, faceP;
-   int maxSendSize =  haloExchange->bufCapacity+SIZE_BYTES;
-   int maxRecvSize =  haloExchange->bufCapacity+SIZE_BYTES;
-   int nCellsM, nCellsP, nbrRankM, nbrRankP;
-   SimFlat* sim = (SimFlat*) data;
-      
-   comm_request_t  recv_requests[6];
-   comm_request_t  send_requests[6];
-   comm_request_t  ready_requests[6];
+	char * recvBufP, * recvBufM;
+	enum HaloFaceOrder faceM, faceP;
+	int maxSendSize =  haloExchange->bufCapacity+SIZE_BYTES;
+	int maxRecvSize =  haloExchange->bufCapacity+SIZE_BYTES;
+	int nCellsM, nCellsP, nbrRankM, nbrRankP;
+	SimFlat* sim = (SimFlat*) data;
 
-   sizeMsgIndex=0;
-   sizeMsgIndexP=0;
-   sizeMsgIndexM=0;
-   
-   //type == 0 for atom-exchange
-   if(haloExchange->type == 0)
-   {
-      AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
-      
-      for (int iAxis=0; iAxis<3; ++iAxis)
-      {
-         faceM = (enum HaloFaceOrder)(2*iAxis);
-         faceP = (enum HaloFaceOrder)(faceM+1);
+	comm_request_t  recv_requests[6];
+	comm_request_t  send_requests[6];
+	comm_request_t  ready_requests[6];
 
-         nCellsM = parms->nCells[faceM];
-         nCellsP = parms->nCells[faceP];
-         
-         nbrRankM = haloExchange->nbrRank[faceM];
-         nbrRankP = haloExchange->nbrRank[faceP];
+	sizeMsgIndex=0;
+	sizeMsgIndexP=0;
+	sizeMsgIndexM=0;
 
-         recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
-         recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
-        
-         if(getMyRank() != nbrRankP)
-         {
-            comm_irecv(recvBufP,
-                          maxRecvSize,
-                          MPI_CHAR,
-                          &(haloExchange->regRecvP[iAxis]),
-                          nbrRankP,
-                          &(recv_requests[(2*iAxis)]));
-         }
+	//type == 0 for atom-exchange
+	if(haloExchange->type == 0)
+	{
+		AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
 
-         if(getMyRank() != nbrRankM)
-         {
-            comm_irecv(recvBufM,
-                          maxRecvSize,
-                          MPI_CHAR,
-                          &(haloExchange->regRecvM[iAxis]),
-                          nbrRankM,
-                          &(recv_requests[(2*iAxis)+1]));
-         }
-      }
-      
-      MPI_Barrier(MPI_COMM_WORLD);
+		for (int iAxis=0; iAxis<3; ++iAxis)
+		{
+			faceM = (enum HaloFaceOrder)(2*iAxis);
+			faceP = (enum HaloFaceOrder)(faceM+1);
 
-      #ifdef COMMUNICATION_TIMERS
-         cudaDeviceSynchronize();
-         startTimer(commHaloTimer);
-      #endif
+			nCellsM = parms->nCells[faceM];
+			nCellsP = parms->nCells[faceP];
 
-      if(comm_use_async())
-      {
-         for (int iAxis=0; iAxis<3; ++iAxis)
-            exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis),
-                              send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);      
-      }
-      else if(comm_use_comm())
-      {
-         for (int iAxis=0; iAxis<3; ++iAxis)
-            exchangeData_Atom_Comm(haloExchange, data, iAxis, recv_requests+(2*iAxis),
-                              send_requests+(2*iAxis), ready_requests+(2*iAxis), 2); 
-      }
+			nbrRankM = haloExchange->nbrRank[faceM];
+			nbrRankP = haloExchange->nbrRank[faceP];
 
-      #ifdef COMMUNICATION_TIMERS
-         cudaDeviceSynchronize();
-         stopTimer(commHaloTimer);
-      #endif
-   }
-   else
-   {
-      ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
-      int sendSizeM[3], sendSizeP[3],  recvSizeM[3],  recvSizeP[3]; 
-      comm_dev_descs_t descs = NULL;
+			recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
+			recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
 
-      if (comm_use_comm() && comm_use_gpu_comm()) 
-         get_curr_descs_req();
-      
-      for (int iAxis=0; iAxis<3; ++iAxis)
-      {
-         faceM = (enum HaloFaceOrder)(2*iAxis);
-         faceP = (enum HaloFaceOrder)(faceM+1);
+			if(getMyRank() != nbrRankP)
+			{
+				comm_irecv(recvBufP,
+			              maxRecvSize,
+			              MPI_CHAR,
+			              &(haloExchange->regRecvP[iAxis]),
+			              nbrRankP,
+			              &(recv_requests[(2*iAxis)]));
+			}
 
-         nCellsM = parms->nCells[faceM];
-         nCellsP = parms->nCells[faceP];
-         
-         nbrRankM = haloExchange->nbrRank[faceM];
-         nbrRankP = haloExchange->nbrRank[faceP];
+			if(getMyRank() != nbrRankM)
+			{
+				comm_irecv(recvBufM,
+			              maxRecvSize,
+			              MPI_CHAR,
+			              &(haloExchange->regRecvM[iAxis]),
+			              nbrRankM,
+			              &(recv_requests[(2*iAxis)+1]));
+			}
+		}
 
-         recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
-         recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
+		MPI_Barrier(MPI_COMM_WORLD);
 
-         sendSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
-         sendSizeP[iAxis] = sizeMsgP[sizeMsgIndexP]*sizeof(ForceMsg);
-         recvSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
-         recvSizeP[iAxis] = sizeMsgP[sizeMsgIndexP]*sizeof(ForceMsg);
+		#ifdef COMMUNICATION_TIMERS
+		 cudaDeviceSynchronize();
+		 startTimer(commHaloTimer);
+		#endif
 
-         sizeMsgIndexP++;
-         sizeMsgIndexM++;
+		if(comm_use_async())
+		{
+			for (int iAxis=0; iAxis<3; ++iAxis)
+				exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis),
+		                    			send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);
+		}
+		else if(comm_use_comm())
+		{
+			for (int iAxis=0; iAxis<3; ++iAxis)
+				exchangeData_Atom_Comm(haloExchange, data, iAxis, recv_requests+(2*iAxis),
+										send_requests+(2*iAxis), ready_requests+(2*iAxis), 2); 
+		}
 
-         if(getMyRank() != nbrRankP)
-         {
-            comm_irecv(recvBufP,
-                          recvSizeP[iAxis],
-                          MPI_CHAR,
-                          &(haloExchange->regRecvP[iAxis]),
-                          nbrRankP,
-                          &(recv_requests[(2*iAxis)]));
+		#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+		stopTimer(commHaloTimer);
+		#endif
+	}
+	else
+	{
+		ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
+		int sendSizeM[3], sendSizeP[3],  recvSizeM[3],  recvSizeP[3]; 
+		comm_dev_descs_t descs = NULL;
 
-            if (comm_use_comm() && comm_use_gpu_comm())
-               comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)]));
-         }
+		if (comm_use_comm() && comm_use_gpu_comm()) 
+			get_curr_descs_req();
 
-         if(getMyRank() != nbrRankM)
-         {
-            comm_irecv(recvBufM,
-                          recvSizeM[iAxis],
-                          MPI_CHAR,
-                          &(haloExchange->regRecvM[iAxis]),
-                          nbrRankM,
-                          &(recv_requests[(2*iAxis)+1]));
+		for (int iAxis=0; iAxis<3; ++iAxis)
+		{
+			faceM = (enum HaloFaceOrder)(2*iAxis);
+			faceP = (enum HaloFaceOrder)(faceM+1);
 
-            if (comm_use_comm() && comm_use_gpu_comm())
-               comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)+1]));
-         }
+			nCellsM = parms->nCells[faceM];
+			nCellsP = parms->nCells[faceP];
 
-         if (comm_use_comm() && comm_use_gpu_comm())
-         {
-            if(getMyRank() != nbrRankM)
-            {
-               comm_prepare_isend(haloExchange->sendBufM_Async[iAxis],
-                                     sendSizeM[iAxis],
-                                     MPI_CHAR,
-                                     &(haloExchange->regSendM[iAxis]),
-                                     nbrRankM,
-                                     &(send_requests[2*iAxis]));
-            }
+			nbrRankM = haloExchange->nbrRank[faceM];
+			nbrRankP = haloExchange->nbrRank[faceP];
 
-            if(getMyRank() != nbrRankP)
-            {
-               comm_prepare_isend(haloExchange->sendBufP_Async[iAxis],
-                                     sendSizeP[iAxis],
-                                     MPI_CHAR,
-                                     &(haloExchange->regSendP[iAxis]),
-                                     nbrRankP,
-                                     &(send_requests[(2*iAxis)+1]));
-            }
+			recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
+			recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
 
-            update_curr_descs_pointer();
-         }
-      }
+			sendSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
+			sendSizeP[iAxis] = sizeMsgP[sizeMsgIndexP]*sizeof(ForceMsg);
+			recvSizeM[iAxis] = sizeMsgM[sizeMsgIndexM]*sizeof(ForceMsg);
+			recvSizeP[iAxis] = sizeMsgP[sizeMsgIndexP]*sizeof(ForceMsg);
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      
-      #ifdef COMMUNICATION_TIMERS
-         cudaDeviceSynchronize();
-         startTimer(commHaloTimer);
-      #endif
+			sizeMsgIndexP++;
+			sizeMsgIndexM++;
 
-      for (int iAxis=0; iAxis<3; ++iAxis)
-      {
-         if (comm_use_comm() && comm_use_gpu_comm())
-         {
-            exchangeData_Force_KI(haloExchange, data, iAxis, 
-               recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-               sendSizeM, sendSizeP,  recvSizeM,  recvSizeP);
-         }
-         else if (comm_use_comm() && comm_use_async())
-         {
-            exchangeData_Force_Async(haloExchange, data, iAxis, 
-               recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-               sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
-         }
-         else if (comm_use_comm())
-         {
-            exchangeData_Force_Comm(haloExchange, data, iAxis, 
-               recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-               sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
-         }
-      }
+			if(getMyRank() != nbrRankP)
+			{
+				comm_irecv(recvBufP,
+					recvSizeP[iAxis],
+					MPI_CHAR,
+					&(haloExchange->regRecvP[iAxis]),
+					nbrRankP,
+					&(recv_requests[(2*iAxis)]));
 
-      #ifdef COMMUNICATION_TIMERS
-         cudaDeviceSynchronize();
-         stopTimer(commHaloTimer);
-      #endif
+				if (comm_use_comm() && comm_use_gpu_comm())
+					comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)]));
+			}
 
-      if (comm_use_comm() && (comm_use_async() || comm_use_gpu_comm()) )
-         comm_progress();
-   }
+			if(getMyRank() != nbrRankM)
+			{
+				comm_irecv(recvBufM,
+					recvSizeM[iAxis],
+					MPI_CHAR,
+					&(haloExchange->regRecvM[iAxis]),
+					nbrRankM,
+					&(recv_requests[(2*iAxis)+1]));
+
+				if (comm_use_comm() && comm_use_gpu_comm())
+					comm_prepare_wait_all(1, &(recv_requests[(2*iAxis)+1]));
+			}
+
+			if (comm_use_comm() && comm_use_gpu_comm())
+			{
+				if(getMyRank() != nbrRankM)
+				{
+					comm_prepare_isend(haloExchange->sendBufM_Async[iAxis],
+						sendSizeM[iAxis],
+						MPI_CHAR,
+						&(haloExchange->regSendM[iAxis]),
+						nbrRankM,
+						&(send_requests[2*iAxis]));
+				}
+
+				if(getMyRank() != nbrRankP)
+				{
+					comm_prepare_isend(haloExchange->sendBufP_Async[iAxis],
+						sendSizeP[iAxis],
+						MPI_CHAR,
+						&(haloExchange->regSendP[iAxis]),
+						nbrRankP,
+						&(send_requests[(2*iAxis)+1]));
+				}
+
+				update_curr_descs_pointer();
+			}
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+		startTimer(commHaloTimer);
+		#endif
+
+		for (int iAxis=0; iAxis<3; ++iAxis)
+		{
+			if (comm_use_comm() && comm_use_gpu_comm())
+			{
+				exchangeData_Force_KI(haloExchange, data, iAxis, 
+					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
+					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP);
+			}
+			else if (comm_use_comm() && comm_use_async())
+			{
+				exchangeData_Force_Async(haloExchange, data, iAxis, 
+					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
+					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
+			}
+			else if (comm_use_comm())
+			{
+				exchangeData_Force_Comm(haloExchange, data, iAxis, 
+					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
+					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
+			}
+		}
+
+		#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+		stopTimer(commHaloTimer);
+		#endif
+
+		if (comm_use_comm() && (comm_use_async() || comm_use_gpu_comm()) )
+			comm_progress();
+	}
 }
 
 
@@ -865,263 +865,270 @@ void exchangeData_Atom_Async(
    HaloExchange* haloExchange, void* data, int iAxis, 
    comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests, int type)
 {
-   enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
-   enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
+	enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
+	enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
 
-   int nbrRankM = haloExchange->nbrRank[faceM];
-   int nbrRankP = haloExchange->nbrRank[faceP];
+	int nbrRankM = haloExchange->nbrRank[faceM];
+	int nbrRankP = haloExchange->nbrRank[faceP];
 
-   char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
-   int typeM = 0, typeP = 0;
+	char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
+	int typeM = 0, typeP = 0;
 
-   sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];      
-   sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];      
+	sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];      
+	sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];      
 
-   if((getMyRank() == nbrRankM))
-   {
-      typeM=1;
-      recvBufM = (char*)haloExchange->d_recvBufM_Async[iAxis];
-   }
-   else
-      recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
+	if((getMyRank() == nbrRankM))
+	{
+		typeM=1;
+		recvBufM = (char*)haloExchange->d_recvBufM_Async[iAxis];
+	}
+	else
+		recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
 
-   if((getMyRank() == nbrRankP))
-   {
-      typeP=1;
-      recvBufP = (char*)haloExchange->d_recvBufP_Async[iAxis];
-   }
-   else
-      recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
+	if((getMyRank() == nbrRankP))
+	{
+		typeP=1;
+		recvBufP = (char*)haloExchange->d_recvBufP_Async[iAxis];
+	}
+	else
+		recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
 
-   int sendSize = 0; //SIZE_BYTES+haloExchange->bufCapacity;
+	int sendSize = 0; //SIZE_BYTES+haloExchange->bufCapacity;
 
-   AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
-   SimFlat* sim = (SimFlat*) data;
-   real_t* pbcFactorM = parms->pbcFactor[faceM];
-   real_t* pbcFactorP = parms->pbcFactor[faceP];
+	AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
+	SimFlat* sim = (SimFlat*) data;
+	real_t* pbcFactorM = parms->pbcFactor[faceM];
+	real_t* pbcFactorP = parms->pbcFactor[faceP];
 
-   real3_old shiftM;
-   real3_old shiftP;
+	real3_old shiftM;
+	real3_old shiftP;
 
-   shiftM[0] = pbcFactorM[0] * sim->domain->globalExtent[0];
-   shiftM[1] = pbcFactorM[1] * sim->domain->globalExtent[1];
-   shiftM[2] = pbcFactorM[2] * sim->domain->globalExtent[2];
+	shiftM[0] = pbcFactorM[0] * sim->domain->globalExtent[0];
+	shiftM[1] = pbcFactorM[1] * sim->domain->globalExtent[1];
+	shiftM[2] = pbcFactorM[2] * sim->domain->globalExtent[2];
 
-   shiftP[0] = pbcFactorP[0] * sim->domain->globalExtent[0];
-   shiftP[1] = pbcFactorP[1] * sim->domain->globalExtent[1];
-   shiftP[2] = pbcFactorP[2] * sim->domain->globalExtent[2];
+	shiftP[0] = pbcFactorP[0] * sim->domain->globalExtent[0];
+	shiftP[1] = pbcFactorP[1] * sim->domain->globalExtent[1];
+	shiftP[2] = pbcFactorP[2] * sim->domain->globalExtent[2];
 
-   int nCellsM = parms->nCells[faceM];
-   int* cellListGpuM = parms->cellListGpu[faceM];
+	int nCellsM = parms->nCells[faceM];
+	int* cellListGpuM = parms->cellListGpu[faceM];
 
-   int nCellsP = parms->nCells[faceP];
-   int* cellListGpuP = parms->cellListGpu[faceP];
-  
-   if(getMyRank() == nbrRankM)
-   {
-      PUSH_RANGE("Atom M", 1);
+	int nCellsP = parms->nCells[faceP];
+	int* cellListGpuP = parms->cellListGpu[faceP];
 
-      loadAtomsBufferFromGpu_Async(recvBufP, &sizeMsgM[iAxis], sim->gpu_atoms_buf, nCellsM, 
-                                 parms->cellListGpu[faceM], sim->gpu, parms->d_natoms_buf, 
-                                 parms->d_partial_sums, shiftM, sim->boundary_stream, typeP);
+	if(getMyRank() == nbrRankM)
+	{
+		PUSH_RANGE("Atom M", 1);
 
-      POP_RANGE;
+		loadAtomsBufferFromGpu_Async(recvBufP, &sizeMsgM[iAxis], sim->gpu_atoms_buf, nCellsM, 
+			parms->cellListGpu[faceM], sim->gpu, parms->d_natoms_buf, 
+			parms->d_partial_sums, shiftM, sim->boundary_stream, typeP);
 
-      if(getMyRank() != nbrRankP)
-         printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
-   }
-   
-   if(getMyRank() == nbrRankP)
-   {
-      PUSH_RANGE("Atom P", 2);
+		POP_RANGE;
 
-      loadAtomsBufferFromGpu_Async(recvBufM, &sizeMsgP[iAxis], sim->gpu_atoms_buf, nCellsP, 
-                                 parms->cellListGpu[faceP], sim->gpu, parms->d_natoms_buf, 
-                                 parms->d_partial_sums, shiftP, sim->boundary_stream, typeM);
+		if(getMyRank() != nbrRankP)
+			printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+	}
 
-      POP_RANGE;
+	if(getMyRank() == nbrRankP)
+	{
+		PUSH_RANGE("Atom P", 2);
 
-      if(getMyRank() != nbrRankM)
-         printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
-   }
+		loadAtomsBufferFromGpu_Async(recvBufM, &sizeMsgP[iAxis], sim->gpu_atoms_buf, nCellsP, 
+			parms->cellListGpu[faceP], sim->gpu, parms->d_natoms_buf, 
+			parms->d_partial_sums, shiftP, sim->boundary_stream, typeM);
 
-   if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-   {
-      PUSH_RANGE("Atom Both", 3);
+		POP_RANGE;
 
-      loadAtomsBufferFromGpu_Async(sendBufM, &sizeMsgM[iAxis], sim->gpu_atoms_buf, nCellsM, 
-                                 parms->cellListGpu[faceM], sim->gpu, parms->d_natoms_buf, 
-                                 parms->d_partial_sums, shiftM, sim->boundary_stream, typeM);
+		if(getMyRank() != nbrRankM)
+			printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+	}
 
-      comm_isend_on_stream(sendBufM, 
-                           (sizeMsgM[iAxis] * sizeof(AtomMsg)),
-                           MPI_CHAR,
-                           &(haloExchange->regSendM[iAxis]),
-                           nbrRankM,
-                           &send_requests[0],
-                           sim->boundary_stream);
+	if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+	{
+		PUSH_RANGE("Atom Both", 3);
 
-      //-------- COMPUTE & SEND faceP
-      loadAtomsBufferFromGpu_Async(sendBufP, &sizeMsgP[iAxis], sim->gpu_atoms_buf, nCellsP, 
-                                 parms->cellListGpu[faceP], sim->gpu, parms->d_natoms_buf, 
-                                 parms->d_partial_sums, shiftP, sim->boundary_stream, typeP);
+		loadAtomsBufferFromGpu_Async(sendBufM, &sizeMsgM[iAxis], sim->gpu_atoms_buf, nCellsM, 
+			parms->cellListGpu[faceM], sim->gpu, parms->d_natoms_buf, 
+			parms->d_partial_sums, shiftM, sim->boundary_stream, typeM);
 
-      comm_isend_on_stream(sendBufP, 
-                           (sizeMsgP[iAxis] * sizeof(AtomMsg)),
-                           MPI_CHAR,
-                           &(haloExchange->regSendP[iAxis]),
-                           nbrRankP,
-                           &send_requests[1],
-                           sim->boundary_stream);
+		comm_isend_on_stream(sendBufM, 
+			(sizeMsgM[iAxis] * sizeof(AtomMsg)),
+			MPI_CHAR,
+			&(haloExchange->regSendM[iAxis]),
+			nbrRankM,
+			&send_requests[0],
+			sim->boundary_stream);
 
-      //-------- Wait recv on stream
-      comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
+		//-------- COMPUTE & SEND faceP
+		loadAtomsBufferFromGpu_Async(sendBufP, &sizeMsgP[iAxis], sim->gpu_atoms_buf, nCellsP, 
+			parms->cellListGpu[faceP], sim->gpu, parms->d_natoms_buf, 
+			parms->d_partial_sums, shiftP, sim->boundary_stream, typeP);
 
-      POP_RANGE;
-   }
+		comm_isend_on_stream(sendBufP, 
+			(sizeMsgP[iAxis] * sizeof(AtomMsg)),
+			MPI_CHAR,
+			&(haloExchange->regSendP[iAxis]),
+			nbrRankP,
+			&send_requests[1],
+			sim->boundary_stream);
 
-   //-------- Unload M
-   unloadAtomsBufferToGpu_Async(recvBufM, sizeMsgM[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeM); //haloExchange->stream_copy, , haloExchange->event_copy);     /*sizeMsgP[sizeMsgIndexP] = */ //sizeMsgIndexP++;
-   //-------- Unload P
-   unloadAtomsBufferToGpu_Async(recvBufP, sizeMsgP[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeP); //haloExchange->stream_copy, typeP, haloExchange->event_copy);
+		//-------- Wait recv on stream
+		comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
 
-   if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-      comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
+		POP_RANGE;
+	}
 
+	//-------- Unload M
+	unloadAtomsBufferToGpu_Async(recvBufM, sizeMsgM[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeM); //haloExchange->stream_copy, , haloExchange->event_copy);     /*sizeMsgP[sizeMsgIndexP] = */ //sizeMsgIndexP++;
+	//-------- Unload P
+	unloadAtomsBufferToGpu_Async(recvBufP, sizeMsgP[iAxis], sim, sim->gpu_atoms_buf, sim->boundary_stream, typeP); //haloExchange->stream_copy, typeP, haloExchange->event_copy);
+
+	if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+		comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
 }
 
 void exchangeData_Force_Comm(HaloExchange* haloExchange, void* data, int iAxis, 
    comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests,
    int * sendSizeM, int * sendSizeP,  int * recvSizeM,  int * recvSizeP, int typeFunc)
 {
-   enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
-   enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
+	enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
+	enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
 
-   int nbrRankM = haloExchange->nbrRank[faceM];
-   int nbrRankP = haloExchange->nbrRank[faceP];
+	int nbrRankM = haloExchange->nbrRank[faceM];
+	int nbrRankP = haloExchange->nbrRank[faceP];
 
-   char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
-   sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];
-   sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];
-   recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
-   recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
-   
-   int typeM=0, typeP=0;
+	char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
+	sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];
+	sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];
+	recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
+	recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
 
-   if((getMyRank() == nbrRankM))
-   {
-      typeP = 1;
-      recvBufP = haloExchange->d_recvBufP_Async[iAxis];
-     // sendBufP = haloExchange->d_sendBufP_Async[iAxis];
-   }
-   if((getMyRank() == nbrRankP))
-   {
-      typeM=1;
-      recvBufM = haloExchange->d_recvBufM_Async[iAxis];
-      //sendBufM = haloExchange->d_sendBufM_Async[iAxis];
-   }
-      
-   ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
-   SimFlat* sim = (SimFlat*) data;
+	int typeM=0, typeP=0;
 
-   int nCellsM = parms->nCells[faceM];
-   int* cellListGpuM = parms->sendCellsGpu[faceM];
+	if((getMyRank() == nbrRankM))
+	{
+		typeP = 1;
+		recvBufP = haloExchange->d_recvBufP_Async[iAxis];
+		// sendBufP = haloExchange->d_sendBufP_Async[iAxis];
+	}
+	if((getMyRank() == nbrRankP))
+	{
+		typeM=1;
+		recvBufM = haloExchange->d_recvBufM_Async[iAxis];
+		//sendBufM = haloExchange->d_sendBufM_Async[iAxis];
+	}
 
-   int nCellsP = parms->nCells[faceP];
-   int* cellListGpuP = parms->sendCellsGpu[faceP];
+	ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
+	SimFlat* sim = (SimFlat*) data;
 
-   //Only send
-   if( typeFunc == 0 || typeFunc == 2)
-   {
-      if(getMyRank() ==  nbrRankM)
-      {
-         PUSH_RANGE("nbrRankM", 1);
+	int nCellsM = parms->nCells[faceM];
+	int* cellListGpuM = parms->sendCellsGpu[faceM];
 
-         loadForceBufferFromGpu_Comm(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
-                                          parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
+	int nCellsP = parms->nCells[faceP];
+	int* cellListGpuP = parms->sendCellsGpu[faceP];
 
-         if(getMyRank() != nbrRankP)
-            printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+	//Only send
+	if( typeFunc == 0 || typeFunc == 2)
+	{
+		if(getMyRank() ==  nbrRankM)
+		{
+			PUSH_RANGE("nbrRankM", 1);
 
-         POP_RANGE;
-      }
-      
-      if((getMyRank() == nbrRankP))
-      {
-         PUSH_RANGE("nbrRankP", 2);
+			loadForceBufferFromGpu_Comm(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
+				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
-         if(getMyRank() != nbrRankM)
-            printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+			if(getMyRank() != nbrRankP)
+				printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
 
-         loadForceBufferFromGpu_Comm(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
-                                       parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
-                                       sim, sim->gpu_force_buf, sim->boundary_stream);
+			POP_RANGE;
+		}
 
-         POP_RANGE;
-      }
+		if((getMyRank() == nbrRankP))
+		{
+			PUSH_RANGE("nbrRankP", 2);
 
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-      {
-         PUSH_RANGE("BOTH", 3);
+			if(getMyRank() != nbrRankM)
+				printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
 
-         loadForceBufferFromGpu_Comm(sendBufM, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
-                                          /* natoms_buf_send */ parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
+			loadForceBufferFromGpu_Comm(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
+				parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
-         comm_isend(sendBufM, 
-                     sendSizeM[iAxis],
-                     MPI_CHAR,
-                     &(haloExchange->regSendM[iAxis]),
-                     nbrRankM,
-                     &send_requests[0]);
+			POP_RANGE;
+		}
 
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+		{
+			PUSH_RANGE("BOTH", 3);
 
-         loadForceBufferFromGpu_Comm(sendBufP, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
-                                       /* natoms_buf_send */ parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
-                                       sim, sim->gpu_force_buf, sim->boundary_stream);
+			loadForceBufferFromGpu_Comm(sendBufM, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
+				/* natoms_buf_send */
+				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
+
+			comm_isend(sendBufM, 
+				sendSizeM[iAxis],
+				MPI_CHAR,
+				&(haloExchange->regSendM[iAxis]),
+				nbrRankM,
+				&send_requests[0]);
 
 
-         //-------- COMPUTE & SEND faceP
-         comm_isend(sendBufP, 
-                     sendSizeP[iAxis],
-                     MPI_CHAR,
-                     &(haloExchange->regSendP[iAxis]),
-                     nbrRankP,
-                     &send_requests[1]);
-         POP_RANGE;
-      }
-   }
-   if(typeFunc == 1 || typeFunc == 2)
-   {
-      unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
-                                    sim, sim->boundary_stream);
+			loadForceBufferFromGpu_Comm(sendBufP, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
+				/* natoms_buf_send */
+				parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
 
-      unloadForceScanCells(nCellsP, parms->recvCellsGpu[faceP], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
-                                    sim, sim->boundary_stream);
-      PUSH_RANGE("UNLOAD", 4);
-      //-------- Wait recv on stream
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, recv_requests);
+			//-------- COMPUTE & SEND faceP
+			comm_isend(sendBufP, 
+				sendSizeP[iAxis],
+				MPI_CHAR,
+				&(haloExchange->regSendP[iAxis]),
+				nbrRankP,
+				&send_requests[1]);
+			POP_RANGE;
+		}
+	}
+	if(typeFunc == 1 || typeFunc == 2)
+	{
+		unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
+			sim, sim->boundary_stream);
 
-      //-------- Unload P
-      unloadForceBufferToGpu_Comm(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
-                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeP);
 
-       //-------- Unload M
-      unloadForceBufferToGpu_Comm(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
-                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
-      
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all(2, send_requests);
+		unloadForceScanCells(nCellsP, parms->recvCellsGpu[faceP], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
+			sim, sim->boundary_stream);
+		
+		PUSH_RANGE("UNLOAD", 4);
+		
+		//-------- Wait recv on stream
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+			comm_wait_all(2, recv_requests);
 
-      POP_RANGE;
-   }    
+		//-------- Unload P
+		unloadForceBufferToGpu_Comm(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
+			sim, sim->gpu_force_buf, sim->boundary_stream, typeP);
+
+		//-------- Unload M
+		unloadForceBufferToGpu_Comm(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
+			sim, sim->gpu_force_buf, sim->boundary_stream, typeM);   
+
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+			comm_wait_all(2, send_requests);
+
+		POP_RANGE;
+	}    
 }
 
 
@@ -1129,176 +1136,179 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
    comm_request_t * recv_requests, comm_request_t * send_requests, comm_request_t * ready_requests,
    int * sendSizeM, int * sendSizeP,  int * recvSizeM,  int * recvSizeP, int typeFunc)
 {
-   enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
-   enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
+	enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
+	enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
 
-   int nbrRankM = haloExchange->nbrRank[faceM];
-   int nbrRankP = haloExchange->nbrRank[faceP];
+	int nbrRankM = haloExchange->nbrRank[faceM];
+	int nbrRankP = haloExchange->nbrRank[faceP];
 
-   char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
-   sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];
-   sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];
-   recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
-   recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
-   
-   int typeM=0, typeP=0;
+	char* sendBufM, * sendBufP, * recvBufP, * recvBufM;
+	sendBufM = (char*)haloExchange->sendBufM_Async[iAxis];
+	sendBufP = (char*)haloExchange->sendBufP_Async[iAxis];
+	recvBufM = (char*)haloExchange->recvBufM_Async[iAxis];
+	recvBufP = (char*)haloExchange->recvBufP_Async[iAxis];
 
-   if((getMyRank() == nbrRankM))
-   {
-      typeP = 1;
-      recvBufP = haloExchange->d_recvBufP_Async[iAxis];
-     // sendBufP = haloExchange->d_sendBufP_Async[iAxis];
-   }
-   if((getMyRank() == nbrRankP))
-   {
-      typeM=1;
-      recvBufM = haloExchange->d_recvBufM_Async[iAxis];
-      //sendBufM = haloExchange->d_sendBufM_Async[iAxis];
-   }
-      
+	int typeM=0, typeP=0;
 
-   ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
-   SimFlat* sim = (SimFlat*) data;
+	if((getMyRank() == nbrRankM))
+	{
+		typeP = 1;
+		recvBufP = haloExchange->d_recvBufP_Async[iAxis];
+		// sendBufP = haloExchange->d_sendBufP_Async[iAxis];
+	}
+	if((getMyRank() == nbrRankP))
+	{
+		typeM=1;
+		recvBufM = haloExchange->d_recvBufM_Async[iAxis];
+		//sendBufM = haloExchange->d_sendBufM_Async[iAxis];
+	}
 
-   int nCellsM = parms->nCells[faceM];
-   int* cellListGpuM = parms->sendCellsGpu[faceM];
+	ForceExchangeParms* parms = (ForceExchangeParms*) haloExchange->parms;
+	SimFlat* sim = (SimFlat*) data;
 
-   int nCellsP = parms->nCells[faceP];
-   int* cellListGpuP = parms->sendCellsGpu[faceP];
+	int nCellsM = parms->nCells[faceM];
+	int* cellListGpuM = parms->sendCellsGpu[faceM];
 
-   //Only send
-   if( typeFunc == 0 || typeFunc == 2)
-   {
+	int nCellsP = parms->nCells[faceP];
+	int* cellListGpuP = parms->sendCellsGpu[faceP];
 
-      if(getMyRank() ==  nbrRankM)
-      {
-         PUSH_RANGE("nbrRankM", 1);
+	//Only send
+	if( typeFunc == 0 || typeFunc == 2)
+	{
+		if(getMyRank() ==  nbrRankM)
+		{
+			PUSH_RANGE("nbrRankM", 1);
 
-         loadForceBufferFromGpu_Async(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
-                                          parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
+			loadForceBufferFromGpu_Async(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
+				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
-         if(getMyRank() != nbrRankP)
-            printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
-   /*
-         if((getMyRank() != nbrRankP))
-         {
-            loadForceBufferFromGpu_Async(
-                              sendBufP, sendSizeP[iAxis], nCellsP, cellListGpuP, 
-                              parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
-                              sim, sim->gpu_force_buf, sim->boundary_stream);
+			if(getMyRank() != nbrRankP)
+				printf("Warning M! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+				/*
+				if((getMyRank() != nbrRankP))
+				{
+					loadForceBufferFromGpu_Async(
+						sendBufP, sendSizeP[iAxis], nCellsP, cellListGpuP, 
+						parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+						sim, sim->gpu_force_buf, sim->boundary_stream);
 
-            comm_isend_on_stream(sendBufP, 
-                                 sendSizeP[iAxis],
-                                 MPI_CHAR,
-                                 &(haloExchange->regSendP[iAxis]),
-                                 nbrRankP,
-                                 &send_requests[1],
-                                 sim->boundary_stream);
-         }
-   */
+					comm_isend_on_stream(sendBufP, 
+						sendSizeP[iAxis],
+						MPI_CHAR,
+						&(haloExchange->regSendP[iAxis]),
+						nbrRankP,
+						&send_requests[1],
+						sim->boundary_stream);
+				}
+				*/
 
+			POP_RANGE;
+		}
 
-         POP_RANGE;
-      }
-      
-      if((getMyRank() == nbrRankP))
-      {
-         PUSH_RANGE("nbrRankP", 2);
+		if((getMyRank() == nbrRankP))
+		{
+			PUSH_RANGE("nbrRankP", 2);
 
-          if(getMyRank() != nbrRankM)
-            printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
+			if(getMyRank() != nbrRankM)
+				printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
 
-   /*
-         if((getMyRank() != nbrRankM))
-         {
-            loadForceBufferFromGpu_Async(sendBufM, sendSizeM[iAxis], nCellsM, cellListGpuM, 
-                                          parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
+			/*
+			if((getMyRank() != nbrRankM))
+			{
+				loadForceBufferFromGpu_Async(sendBufM, sendSizeM[iAxis], nCellsM, cellListGpuM, 
+					parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
+					sim, sim->gpu_force_buf, sim->boundary_stream);
 
-            comm_isend_on_stream(sendBufM, 
-                                    sendSizeM[iAxis],
-                                    MPI_CHAR,
-                                    &(haloExchange->regSendM[iAxis]),
-                                    nbrRankM,
-                                    &send_requests[0],
-                                    sim->boundary_stream);
+				comm_isend_on_stream(sendBufM, 
+					sendSizeM[iAxis],
+					MPI_CHAR,
+					&(haloExchange->regSendM[iAxis]),
+					nbrRankM,
+					&send_requests[0],
+					sim->boundary_stream);
+			}
+			*/
+			loadForceBufferFromGpu_Async(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
+				parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
-         }
-      */
-         loadForceBufferFromGpu_Async(recvBufM, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
-                                       parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
-                                       sim, sim->gpu_force_buf, sim->boundary_stream);
+			POP_RANGE;
+		}
 
-         POP_RANGE;
-      }
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+		{
+			PUSH_RANGE("BOTH", 3);
 
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-      {
-         PUSH_RANGE("BOTH", 3);
+			loadForceBufferFromGpu_Async(sendBufM, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
+				/* natoms_buf_send */ 
+				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
-         loadForceBufferFromGpu_Async(sendBufM, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
-                                          /* natoms_buf_send */ parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
-                                          sim, sim->gpu_force_buf, sim->boundary_stream);
-
-         comm_isend_on_stream(sendBufM, 
-                              sendSizeM[iAxis],
-                              MPI_CHAR,
-                              &(haloExchange->regSendM[iAxis]),
-                              nbrRankM,
-                              &send_requests[0],
-                              sim->boundary_stream);
+			comm_isend_on_stream(sendBufM, 
+				sendSizeM[iAxis],
+				MPI_CHAR,
+				&(haloExchange->regSendM[iAxis]),
+				nbrRankM,
+				&send_requests[0],
+				sim->boundary_stream);
 
 
-         loadForceBufferFromGpu_Async(sendBufP, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
-                                       /* natoms_buf_send */ parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
-                                       sim, sim->gpu_force_buf, sim->boundary_stream);
+			loadForceBufferFromGpu_Async(sendBufP, sendSizeP[iAxis], nCellsP, parms->sendCellsGpu[faceP], 
+				/* natoms_buf_send */ 
+				parms->natoms_buf_send[faceP], parms->partial_sums[faceP],
+				sim, sim->gpu_force_buf, sim->boundary_stream);
 
 
-         //-------- COMPUTE & SEND faceP
-         comm_isend_on_stream(sendBufP, 
-                              sendSizeP[iAxis],
-                              MPI_CHAR,
-                              &(haloExchange->regSendP[iAxis]),
-                              nbrRankP,
-                              &send_requests[1],
-                              sim->boundary_stream);
-         POP_RANGE;
-      }
-   }
-   if(typeFunc == 1 || typeFunc == 2)
-   {
-      unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
-                                    sim, sim->boundary_stream);
+			//-------- COMPUTE & SEND faceP
+			comm_isend_on_stream(sendBufP, 
+				sendSizeP[iAxis],
+				MPI_CHAR,
+				&(haloExchange->regSendP[iAxis]),
+				nbrRankP,
+				&send_requests[1],
+				sim->boundary_stream);
+
+			POP_RANGE;
+		}
+	}
+
+	if(typeFunc == 1 || typeFunc == 2)
+	{
+		unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
+			sim, sim->boundary_stream);
 
 
-      unloadForceScanCells(nCellsP, parms->recvCellsGpu[faceP], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
-                                    sim, sim->boundary_stream);
-      //WAIT
-      PUSH_RANGE("UNLOAD", 4);
-      //-------- Wait recv on stream
+		unloadForceScanCells(nCellsP, parms->recvCellsGpu[faceP], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
+			sim, sim->boundary_stream);
+		
+		PUSH_RANGE("UNLOAD", 4);
+		
+		//-------- Wait recv on stream
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+			comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
 
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
-      //UNPACK
-      //-------- Unload P
-      unloadForceBufferToGpu_Async(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
-                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeP);
+		//-------- Unload P
+		unloadForceBufferToGpu_Async(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
+			sim, sim->gpu_force_buf, sim->boundary_stream, typeP);
 
-       //-------- Unload M
-      unloadForceBufferToGpu_Async(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
-                                    /* natoms_buf_recv */parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
-                                    sim, sim->gpu_force_buf, sim->boundary_stream, typeM);  
+		//-------- Unload M
+		unloadForceBufferToGpu_Async(recvBufM, recvSizeM[iAxis], nCellsM, parms->recvCellsGpu[faceM], 
+			/* natoms_buf_recv */
+			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
+			sim, sim->gpu_force_buf, sim->boundary_stream, typeM);  
 
+		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
+			comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
 
-      if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
-         comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
-
-      POP_RANGE;
-   }    
+		POP_RANGE;
+	}    
 }
 
 void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis, 

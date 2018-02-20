@@ -20,7 +20,7 @@ function run() {
         \
         -x ASYNC_USE_ASYNC=0 \
         -x ASYNC_ENABLE_DEBUG=0 \
-   	    -x COMM_USE_COMM=$A  -x COMM_USE_ASYNC=$B   -x COMM_USE_GPU_COMM=$C \
+   	-x COMM_USE_COMM=$A  -x COMM_USE_ASYNC=$B   -x COMM_USE_GPU_COMM=$C \
         \
         -x MP_ENABLE_DEBUG=0 \
         -x GDS_ENABLE_DEBUG=0 \
