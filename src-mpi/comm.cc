@@ -337,7 +337,7 @@ int comm_send_ready_on_stream(int rank, comm_request_t *creq, cudaStream_t strea
                                peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE /* MP_PUT_NOWAIT */, stream));
     comm_track_request(req);
     //MP_CHECK(mp_wait(req));
-    printf("[%d] comm_send_ready_on_stream +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
+    //printf("[%d] comm_send_ready_on_stream +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
     atomic_inc(&remote_ready_values[rank]);
     return ret;
 }
@@ -356,7 +356,7 @@ int comm_send_ready(int rank, comm_request_t *creq)
                      peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE | MP_PUT_NOWAIT));
     //MP_CHECK(mp_wait(req));
     //comm_track_request(req);
-    printf("[%d] comm_send_ready +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
+    //printf("[%d] comm_send_ready +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
     atomic_inc(&remote_ready_values[rank]);
     return ret;
 }
@@ -369,7 +369,7 @@ int comm_wait_ready_on_stream(int rank, cudaStream_t stream)
     int peer = comm_mpi_rank_to_peer(rank);
     DBG("rank=%d payload=%x\n", rank, ready_values[rank]); 
     MP_CHECK(mp_wait_dword_geq_on_stream(&ready_table[rank], ready_values[rank], stream));
-    printf("[%d] comm_wait_ready_on_stream +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
+    //printf("[%d] comm_wait_ready_on_stream +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
     ready_values[rank]++;
     return ret;
 }
@@ -391,7 +391,7 @@ int comm_wait_ready(int rank)
             cnt = 0;
         }
     }
-    printf("[%d] comm_wait_ready +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
+    //printf("[%d] comm_wait_ready +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
     ready_values[rank]++;
     return ret;
 }
