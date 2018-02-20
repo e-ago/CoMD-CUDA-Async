@@ -1,13 +1,9 @@
 #pragma once
 
-#include <mpi.h>
-
-
 #ifdef __cplusplus
-#include "mp/device.cuh"
-//num send/recv contemporanee
+#include <mp/device.cuh>
 struct comm_dev_descs {
-    enum { max_n_descs = 16 };
+    enum { max_n_descs = 32 };
     int n_ready;
     mp::mlx5::isem32_t ready[max_n_descs];
 
@@ -18,31 +14,7 @@ struct comm_dev_descs {
     mp::mlx5::wait_desc_t wait[max_n_descs];
 };
 #endif
-typedef struct comm_dev_descs * comm_dev_descs_t;
-
-#include <unistd.h>
-
-extern int mpi_comm_rank;
-
-#define STRDBG stderr
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-//int dbg_enabled();
-
- //fprintf(STRDBG, "[%d] [%d] HPGMG %s(): " FMT, getpid(), mpi_comm_rank, __FUNCTION__ , ## ARGS);   \
-            //fflush(STRDBG);                                             \
-                                                                      
-
-#define DBG(FMT, ARGS...)                                               \
-    do {                                                                \
-            \
-    } while(0)
-
-#ifdef __cplusplus
-}
-#endif
+typedef struct comm_dev_descs *comm_dev_descs_t;
 
 
 #define __COMM_CHECK(stmt, cond_str)                    \
@@ -86,6 +58,7 @@ extern "C" {
     int comm_wait_all_on_stream(int count, comm_request_t *creqs, comm_stream_t stream);
     int comm_wait(comm_request_t *creq);
     int comm_flush();
+    int comm_flush_new();
     int comm_progress();
 
     int comm_prepare_wait_ready(int rank);
@@ -93,13 +66,8 @@ extern "C" {
                            int dest_rank, comm_request_t *creq);
     int comm_prepare_wait_all(int count, comm_request_t *creqs);
     comm_dev_descs_t comm_prepared_requests();
-    int comm_register(void *buf, size_t size, comm_reg_t *creg);
+    int comm_register(void *buf, size_t size, MPI_Datatype type, comm_reg_t *creg);
     int comm_select_device(int mpiRank);
-    comm_dev_descs_t get_curr_descs_req();
-    comm_dev_descs_t get_start_descs_req();
-    comm_dev_descs_t update_curr_descs_pointer();
-    comm_dev_descs_t update_start_descs_pointer();
-
 
 #ifdef __cplusplus
 }

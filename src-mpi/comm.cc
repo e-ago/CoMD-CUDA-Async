@@ -7,8 +7,34 @@
 #include <errno.h>
 #include <mpi.h>
 #include <cuda_runtime.h>
-#include "mp.h"
+#include <mp.h>
 #include "comm.h"
+
+static int mpi_comm_rank=0;
+
+int dbg_enabled()
+{
+    static int dbg_is_enabled = -1;
+    if (-1 == dbg_is_enabled) {        
+        const char *env = getenv("COMM_ENABLE_DEBUG");
+        if (env) {
+            int en = atoi(env);
+            dbg_is_enabled = !!en;
+        } else
+            dbg_is_enabled = 0;
+    }
+    return dbg_is_enabled;
+}
+
+#define DBG(FMT, ARGS...)                                           \
+do {                                                                \
+    if (dbg_enabled()) {                                            \
+        fprintf(stderr, "[%d] [%d] COMM DBG %s(): " FMT,               \
+                getpid(), mpi_comm_rank, __FUNCTION__ , ## ARGS);   \
+        fflush(stderr);                                             \
+    }                                                               \
+} while(0)
+
 
 #define MP_CHECK(stmt)                                  \
 do {                                                    \
@@ -38,7 +64,6 @@ static int         n_peers = -1;
 static const int   bad_peer = -1;
 static int         comm_size;
 static int         comm_rank;
-static int         comm_gpu_id=0;
 
 // tables are indexed by rank, not peer
 static uint32_t   *ready_table;
@@ -49,7 +74,10 @@ static uint32_t   *ready_values;
 static uint32_t   *remote_ready_values;
 static mp_reg_t    remote_ready_values_reg;
 
-#define MAX_REQS 16384
+static int startGlobalReqsIndex=0;
+static int startGlobalFlushReqsIndex=0;
+
+#define MAX_REQS 16384 //32768 //1048576
 static mp_request_t reqs[MAX_REQS];
 static int n_reqs = 0;
 
@@ -58,13 +86,12 @@ static int n_reqs = 0;
 #define PAGE_OFF  (PAGE_SIZE-1)
 #define PAGE_MASK (~(PAGE_OFF))
 
+#if defined(__x86_64__) || defined (__i386__)
+
 #define mb()    __asm__ volatile("mfence":::"memory")
 #define rmb()   __asm__ volatile("lfence":::"memory")
 #define wmb()   __asm__ volatile("sfence" ::: "memory")
 #define iomb() mb()
-
-#define ACCESS_ONCE(V)                          \
-    (*(volatile __typeof__ (V) *)&(V))
 
 static inline void arch_pause(void)
 {
@@ -81,6 +108,40 @@ static inline void arch_cpu_relax(void)
         //BUG: poll_lat hangs after a few iterations
         //arch_wait();
 }
+
+
+#elif defined(__powerpc__)
+
+static void mb(void) __attribute__((unused)) ;
+static void mb(void)
+{
+    asm volatile("sync") ;
+}
+
+static void wmb(void) __attribute__((unused)) ;
+static void wmb(void)
+{
+    asm volatile("sync") ;
+}
+static void rmb(void) __attribute__((unused)) ;
+static void rmb(void)
+{
+    asm volatile("sync") ;
+}
+
+#define iomb() mb()
+
+static void arch_cpu_relax(void) __attribute__((unused)) ;
+static void arch_cpu_relax(void)
+{
+}
+
+#else
+#error "platform not supported"
+#endif
+#define ACCESS_ONCE(V)                          \
+    (*(volatile __typeof__ (V) *)&(V))
+
 
 int comm_use_comm()
 {
@@ -142,14 +203,10 @@ int comm_init(MPI_Comm comm, int gpuId)
 {
     int i, j;
 
-    if(gpuId < 0)
-    {
-        printf("ERROR: Wrong GPU ID (%d) \n", gpuId);
-        return -1;
-    }
-
     MPI_Comm_size (comm, &comm_size);
     MPI_Comm_rank (comm, &comm_rank);
+
+    mpi_comm_rank = comm_rank;
 
     assert(comm_size < MAX_RANKS);
 
@@ -173,18 +230,15 @@ int comm_init(MPI_Comm comm, int gpuId)
     cudaFree(0);
     MP_CHECK(mp_init(comm, peers, n_peers, MP_INIT_DEFAULT, gpuId));
 
-#if 0
     // init ready stuff
     size_t table_size = MAX(sizeof(*ready_table) * comm_size, PAGE_SIZE);
-    ready_table = (uint32_t *)posix_memalign(PAGE_SIZE, table_size);
-//    cudaMallocHost((void**)&(ready_table), table_size);
+    assert(0 == posix_memalign((void **)&ready_table, PAGE_SIZE, table_size));
     assert(ready_table);
 
     ready_values = (uint32_t *)malloc(table_size);
     assert(ready_values);
 
-    remote_ready_values = (uint32_t *)posix_memalign(PAGE_SIZE, table_size);
-//    cudaMallocHost((void**)&(remote_ready_values), table_size);
+    assert(0 == posix_memalign((void **)&remote_ready_values, PAGE_SIZE, table_size));
     assert(remote_ready_values);
     
     for (i=0; i<comm_size; ++i) {
@@ -194,14 +248,13 @@ int comm_init(MPI_Comm comm, int gpuId)
     }
     iomb();
 
-    DBG("registering ready_table size=%d\n", table_size);
+    DBG("registering ready_table size=%zd\n", table_size);
     MP_CHECK(mp_register(ready_table, table_size, &ready_table_reg));
     DBG("creating ready_table window\n");
     MP_CHECK(mp_window_create(ready_table, table_size, &ready_table_win));
     DBG("registering remote_ready_table\n");
     MP_CHECK(mp_register(remote_ready_values, table_size, &remote_ready_values_reg));
-#endif
-    
+
     comm_initialized = 1;
 
     return 0;
@@ -215,14 +268,20 @@ static size_t comm_size_of_mpi_type(MPI_Datatype mpi_type)
 {
     size_t ret = 0;
 
-    if (mpi_type == MPI_CHAR) {
+    if (mpi_type == MPI_DOUBLE) {
+        ret = sizeof(double);
+    }
+    else if (mpi_type == MPI_FLOAT) {
+        ret = sizeof(float);
+    }
+    else if (mpi_type == MPI_CHAR) {
         ret = sizeof(char);
     }
     else if (mpi_type == MPI_INT) {
         ret = sizeof(int);
-    }  
+    }
     else {
-        comm_err("invalid type\n");
+        comm_err("invalid type %d\n", mpi_type);
         exit(1);
     }
     return ret;
@@ -257,6 +316,10 @@ static void comm_track_request(mp_request_t *req)
 {
     assert(n_reqs < MAX_REQS);    
     reqs[n_reqs++] = *req;
+    /*
+    if(comm_rank == 0)
+        printf("TRACK n_reqs: %d\n", n_reqs);
+    */
     DBG("n_reqs=%d\n", n_reqs);
 }
 
@@ -269,12 +332,14 @@ int comm_send_ready_on_stream(int rank, comm_request_t *creq, cudaStream_t strea
     mp_request_t *req = (mp_request_t*)creq;
     assert(req);
     int remote_offset = /*self rank*/comm_rank * sizeof(uint32_t);
-    DBG("dest_rank=%d payload=%x offset=%d\n", rank, remote_ready_values[rank], remote_offset);
+    DBG("dest_rank=%d/%d payload=%x offset=%d\n", rank, peer, remote_ready_values[rank], remote_offset);
     MP_CHECK(mp_iput_on_stream(&remote_ready_values[rank], sizeof(uint32_t), &remote_ready_values_reg, 
-                               peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE, stream));
-    //MP_CHECK(mp_wait(req));
+                               peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE /* MP_PUT_NOWAIT */, stream));
     comm_track_request(req);
+    //MP_CHECK(mp_wait(req));
+    printf("[%d] comm_send_ready_on_stream +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
     atomic_inc(&remote_ready_values[rank]);
+    return ret;
 }
 
 int comm_send_ready(int rank, comm_request_t *creq)
@@ -288,10 +353,12 @@ int comm_send_ready(int rank, comm_request_t *creq)
     int remote_offset = /*my rank*/comm_rank * sizeof(uint32_t);
     DBG("dest_rank=%d payload=%x offset=%d\n", rank, remote_ready_values[rank], remote_offset);
     MP_CHECK(mp_iput(&remote_ready_values[rank], sizeof(uint32_t), &remote_ready_values_reg, 
-                     peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE));
+                     peer, remote_offset, &ready_table_win, req, MP_PUT_INLINE | MP_PUT_NOWAIT));
     //MP_CHECK(mp_wait(req));
-    comm_track_request(req);
+    //comm_track_request(req);
+    printf("[%d] comm_send_ready +1 di remote_ready_values[%d]=%d\n", comm_rank, rank, remote_ready_values[rank]);
     atomic_inc(&remote_ready_values[rank]);
+    return ret;
 }
 
 int comm_wait_ready_on_stream(int rank, cudaStream_t stream)
@@ -302,6 +369,7 @@ int comm_wait_ready_on_stream(int rank, cudaStream_t stream)
     int peer = comm_mpi_rank_to_peer(rank);
     DBG("rank=%d payload=%x\n", rank, ready_values[rank]); 
     MP_CHECK(mp_wait_dword_geq_on_stream(&ready_table[rank], ready_values[rank], stream));
+    printf("[%d] comm_wait_ready_on_stream +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
     ready_values[rank]++;
     return ret;
 }
@@ -323,6 +391,7 @@ int comm_wait_ready(int rank)
             cnt = 0;
         }
     }
+    printf("[%d] comm_wait_ready +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
     ready_values[rank]++;
     return ret;
 }
@@ -339,6 +408,7 @@ int comm_test_ready(int rank, int *p_rdy)
         rmb();
         *p_rdy = !(ACCESS_ONCE(ready_table[rank]) < ready_values[rank]);
         if (*p_rdy) {
+            printf("[%d] fa +1 di ready_values[%d]=%d\n", comm_rank, rank, ready_values[rank]);
             ++ready_values[rank];
             break;
         }
@@ -363,7 +433,7 @@ int comm_wait_all_on_stream(int count, comm_request_t *creqs, cudaStream_t strea
     } else {
         MP_CHECK(mp_wait_all_on_stream(count, reqs, stream));
     }
-    //memset(creqs, 0, sizeof(comm_request_t)*count);
+    memset(creqs, 0, sizeof(comm_request_t)*count);
     return ret;
 }
 
@@ -393,6 +463,7 @@ int comm_irecv(void *recv_buf, size_t size, MPI_Datatype type, comm_reg_t *creg,
                int src_rank, comm_request_t *creq)
 {
     assert(comm_initialized);
+    DBG("start\n");
     int ret = 0;
     int retcode;
     size_t nbytes = size*comm_size_of_mpi_type(type);
@@ -401,7 +472,8 @@ int comm_irecv(void *recv_buf, size_t size, MPI_Datatype type, comm_reg_t *creg,
     mp_request_t *req = (mp_request_t*)creq;
     assert(req);
     int peer = comm_mpi_rank_to_peer(src_rank);
-    DBG("src_rank=%d peer=%d nbytes=%d buf=%p *reg=%p\n", src_rank, peer, nbytes, recv_buf, *reg);
+
+    DBG("src_rank=%d peer=%d nbytes=%zd buf=%p *reg=%p\n", src_rank, peer, nbytes, recv_buf, *reg);
 
     if (!size) {
         ret = -EINVAL;
@@ -435,13 +507,14 @@ int comm_isend_on_stream(void *send_buf, size_t size, MPI_Datatype type, comm_re
     assert(comm_initialized);
     int ret = 0;
     int retcode;
+    DBG("start\n");
     size_t nbytes = size*comm_size_of_mpi_type(type);
     mp_reg_t *reg = (mp_reg_t*)creg;
     assert(reg);
     mp_request_t *req = (mp_request_t*)creq;
     int peer = comm_mpi_rank_to_peer(dest_rank);
 
-    DBG("dest_rank=%d peer=%d nbytes=%d\n", dest_rank, peer, nbytes);
+    DBG("dest_rank=%d peer=%d nbytes=%zd\n", dest_rank, peer, nbytes);
 
     if (!size) {
         ret = -EINVAL;
@@ -475,13 +548,14 @@ int comm_isend(void *send_buf, size_t size, MPI_Datatype type, comm_reg_t *creg,
     assert(comm_initialized);
     int ret = 0;
     int retcode;
+    DBG("start\n");
     size_t nbytes = size*comm_size_of_mpi_type(type);
     mp_reg_t *reg = (mp_reg_t*)creg;
     assert(reg);
     mp_request_t *req = (mp_request_t*)creq;
     int peer = comm_mpi_rank_to_peer(dest_rank);
 
-    DBG("dest_rank=%d peer=%d nbytes=%d\n", dest_rank, peer, nbytes);
+    DBG("dest_rank=%d peer=%d nbytes=%zd\n", dest_rank, peer, nbytes);
 
     if (!size) {
         ret = -EINVAL;
@@ -509,12 +583,13 @@ out:
     return ret;
 }
 
-int comm_register(void *buf, size_t size, comm_reg_t *creg)
+int comm_register(void *buf, size_t size, MPI_Datatype type, comm_reg_t *creg)
 {
     assert(comm_initialized);
     int ret = 0;
     int retcode;
-    size_t nbytes = size*comm_size_of_mpi_type(MPI_DOUBLE);
+    DBG("start\n");
+    size_t nbytes = size * comm_size_of_mpi_type(type);
     mp_reg_t *reg = (mp_reg_t*)creg;
     assert(reg);
 
@@ -535,20 +610,59 @@ out:
 
 
 static struct comm_dev_descs *pdreqs = NULL;
-static struct comm_dev_descs *curr_dreqs = NULL;
-static struct comm_dev_descs *start_dreqs = NULL;
-static int last_descs = -1;
-static const size_t n_dreqs = 1024; //36 prima
+static const size_t n_dreqs = 128; //36 prima
 static int dreq_idx = 0;
+#define CONST_FLUSH 1024
+#define CONST_PROGRESS 50
 
+int comm_progress()
+{
+    int ret=0;
+
+    DBG("n_reqs=%d\n", n_reqs);
+    assert(n_reqs < MAX_REQS);
+    ret = mp_progress_all(n_reqs, reqs);
+#if 0
+   // if( (startGlobalReqsIndex+CONST_PROGRESS) < n_reqs)
+   // {
+//        if(comm_rank == 0)
+ //           printf("progress CONST_PROGRESS da req: startGlobalReqsIndex %d, n_reqs: %d\n", startGlobalReqsIndex, n_reqs);
+        
+        ret = p_progress_all(CONST_PROGRESS, reqs+startGlobalReqsIndex); //*CONST_PROGRESS));
+        if (ret < 0)
+            comm_err("ret=%d\n", ret);
+
+    //    startGlobalReqsIndex = (startGlobalReqsIndex+CONST_PROGRESS)%MAX_REQS; //(startGlobalReqsIndex+1)%MAX_REQS;
+   // }
+#endif
+    return ret;
+}
+
+ 
 int comm_flush()
 {
     int ret = 0;
     DBG("n_reqs=%d\n", n_reqs);
-    assert(n_reqs < MAX_REQS);
     if(n_reqs == 0)
         return ret;
-    
+
+    assert(n_reqs < MAX_REQS);
+    //int diff = n_reqs - startGlobalFlushReqsIndex;
+    ret = mp_wait_all(n_reqs, reqs); //+startGlobalFlushReqsIndex);
+    n_reqs=0;
+    startGlobalReqsIndex=0;
+    startGlobalFlushReqsIndex=0;
+
+    return ret;
+}
+
+#if 0
+
+int comm_flush_new()
+{
+    int ret = 0;
+    DBG("n_reqs=%d\n", n_reqs);
+    assert(n_reqs < MAX_REQS);
 #if 0
     do {
         rmb();
@@ -560,26 +674,77 @@ int comm_flush()
         cudaStreamQuery(NULL);
     } while(ret < n_reqs);
 #endif
+/*
     ret = mp_wait_all(n_reqs, reqs);
-    if (ret) {
-        comm_err("got error in mp_wait_all ret=%d\n", ret);
-        exit(EXIT_FAILURE);
+    n_reqs=0;
+    startGlobalReqsIndex=0;
+*/
+#if 1
+     //int tmp = n_reqs;
+    if( (startGlobalFlushReqsIndex+CONST_FLUSH) < n_reqs)
+    {
+        //if(comm_rank == 0)
+        //    printf("WAIT FLUSH da req: startGlobalFlushReqsIndex %d, n_reqs: %d\n", startGlobalFlushReqsIndex, n_reqs);
+
+        ret = mp_wait_all(CONST_FLUSH, reqs+startGlobalFlushReqsIndex);
+        if (ret) {
+            comm_err("got error in mp_wait_all ret=%d\n", ret);
+            exit(EXIT_FAILURE);
+        }
+
+        if((startGlobalFlushReqsIndex+CONST_FLUSH) == MAX_REQS)
+        {
+            n_reqs = 0;
+            startGlobalReqsIndex=0;
+            startGlobalFlushReqsIndex = 0;
+
+       //    if(comm_rank == 0)
+        //        printf("WAIT FLUSH 0 da startGlobalFlushReqsIndex: %d, startGlobalReqsIndex: %d\n", startGlobalFlushReqsIndex, startGlobalReqsIndex);
+        }
+        else
+        {
+            startGlobalFlushReqsIndex = (startGlobalFlushReqsIndex+CONST_FLUSH)%MAX_REQS;
+            if(startGlobalFlushReqsIndex > startGlobalReqsIndex)
+                startGlobalReqsIndex = startGlobalFlushReqsIndex;
+
+        //    if(comm_rank == 0)
+        //        printf("WAIT FLUSH ++ da startGlobalFlushReqsIndex: %d, startGlobalReqsIndex: %d\n", startGlobalFlushReqsIndex, startGlobalReqsIndex);
+        }
+       
+
+        //n_reqs -= CONST_FLUSH;
+//        startGlobalReqsIndex--;
     }
-    n_reqs = 0;
+    #endif
     return ret;
 }
 
-int comm_progress()
+int comm_flush_force()
 {
+    int ret = 0;
     DBG("n_reqs=%d\n", n_reqs);
     assert(n_reqs < MAX_REQS);
-    int ret = mp_progress_all(n_reqs, reqs);
-    if (ret < 0) {
-        comm_err("ret=%d\n", ret);
+
+    if((n_reqs-startGlobalFlushReqsIndex) > 0)
+    {
+
+    //    if(comm_rank == 0)
+    //        printf("WAIT FORCE flush startGlobalFlushReqsIndex: %d, (n_reqs-startGlobalFlushReqsIndex): %d\n", startGlobalFlushReqsIndex, (n_reqs-startGlobalFlushReqsIndex));
+
+        ret = mp_wait_all(n_reqs-startGlobalFlushReqsIndex, reqs+startGlobalFlushReqsIndex);
+        if (ret) {
+            comm_err("got error in mp_wait_all ret=%d\n", ret);
+            exit(EXIT_FAILURE);
+        }
+
+        n_reqs=0;
+        startGlobalFlushReqsIndex=0;
+        startGlobalReqsIndex=0;
     }
+
     return ret;
 }
-
+#endif
 
 static struct comm_dev_descs *dreqs()
 {
@@ -598,63 +763,8 @@ static struct comm_dev_descs *dreqs()
     }
     return pdreqs + dreq_idx;
 }
-
-
-comm_dev_descs_t get_curr_descs_req()
-{
-    if (last_descs == -1) {
-        if(comm_rank == 0)
-            printf("Alloco n_dreqs=%d descs\n", n_dreqs);
-
-        cudaError_t err;
-        err = cudaMallocHost((void**)&pdreqs, n_dreqs*sizeof(struct comm_dev_descs), 0);
-        if (err != cudaSuccess) {
-            comm_err("error while allocating comm_dev_descs, exiting...\n");
-            exit(-1);
-        }
-        assert(pdreqs);
-        memset(pdreqs, 0, n_dreqs*sizeof(pdreqs));
-        last_descs=0;
-    }
-    curr_dreqs = pdreqs + last_descs;
-    start_dreqs = pdreqs + last_descs;
-
-    if(comm_rank == -1)
-        printf("ALLOCO last_descs=%d, curr_dreqs=%p\n", last_descs, curr_dreqs);
-
-    return curr_dreqs;
-}
-
-comm_dev_descs_t get_start_descs_req()
-{
-    if(comm_rank == -1)
-        printf("get start_dreqs=%p\n", start_dreqs);
-    return start_dreqs;
-}
-
-comm_dev_descs_t update_curr_descs_pointer()
-{
-    assert(curr_dreqs);
-    assert(last_descs >= 0);
-    last_descs++;
-    curr_dreqs = pdreqs + last_descs;
-
-    if(comm_rank == -1)
-        printf("update last_descs=%d, curr_dreqs=%p\n", last_descs, curr_dreqs);
-
-    return curr_dreqs;
-}
-
-comm_dev_descs_t update_start_descs_pointer()
-{
-    start_dreqs = start_dreqs + 1;
-    if(comm_rank == -1)
-        printf("update start_dreqs=%p\n", start_dreqs);
-
-    return start_dreqs;
-}
-
-int comm_prepare_wait_ready(int rank, int iAxis)
+    
+int comm_prepare_wait_ready(int rank)
 {
     assert(comm_initialized);
     assert(rank < comm_size);
@@ -672,18 +782,16 @@ int comm_prepare_isend(void *send_buf, size_t size, MPI_Datatype type, comm_reg_
                        int dest_rank, comm_request_t *creq)
 {
     assert(comm_initialized);
-    assert(curr_dreqs);
-    assert(last_descs >= 0);
-
     int ret = 0;
     int retcode;
+    DBG("start\n");
     size_t nbytes = size*comm_size_of_mpi_type(type);
     mp_reg_t *reg = (mp_reg_t*)creg;
     assert(reg);
     mp_request_t *req = (mp_request_t*)creq;
     int peer = comm_mpi_rank_to_peer(dest_rank);
 
-    DBG("dest_rank=%d peer=%d nbytes=%d\n", dest_rank, peer, nbytes);
+    DBG("dest_rank=%d peer=%d nbytes=%zd\n", dest_rank, peer, nbytes);
 
     if (!size) {
         ret = -EINVAL;
@@ -704,16 +812,14 @@ int comm_prepare_isend(void *send_buf, size_t size, MPI_Datatype type, comm_reg_
         goto unreg;
     }
 
-    if(comm_rank == -1)
-        printf("Set send descs (last_descs=%d), curr_dreqs->n_tx=%d\n", last_descs, curr_dreqs->n_tx);
-
-
-    retcode = mp::mlx5::get_descriptors(&(curr_dreqs->tx[curr_dreqs->n_tx++]), req);
+    retcode = mp::mlx5::get_descriptors(&dreqs()->tx[dreqs()->n_tx++], req);
     if (retcode) {
         comm_err("error in mp_isend_on_stream ret=%d\n", retcode);
         ret = -1;
         goto unreg;
     }
+
+    DBG("prepares send=%p (%d), rank: %d, %d\n", &dreqs()->tx[(dreqs()->n_tx-1)], dreqs()->n_tx, peer, dest_rank);
 
     comm_track_request(req);
 
@@ -732,16 +838,9 @@ int comm_prepare_wait_all(int count, comm_request_t *creqs)
     int ret = 0;
     DBG("count=%d\n", count);
     assert(comm_initialized);
-    assert(curr_dreqs);
-    assert(last_descs >= 0);
-
     mp_request_t *req = (mp_request_t*)creqs;
     for (int i=0; i < count; ++i) {
-        if(comm_rank == -1)
-            printf("Set wait descs (last_descs=%d), curr_dreqs->n_wait=%d, count=%d\n", 
-                last_descs, curr_dreqs->n_wait, count);
-
-        retcode = mp::mlx5::get_descriptors(&(curr_dreqs->wait[curr_dreqs->n_wait++]), req+i);
+        retcode = mp::mlx5::get_descriptors(&dreqs()->wait[dreqs()->n_wait++], req+i);
         if (retcode) {
             comm_err("error in get_descriptors(wait) (%d)\n", retcode);
             ret = -1;
@@ -778,7 +877,7 @@ int comm_select_device(int mpiRank)
     char * value = getenv("USE_GPU"); 
     if (value != NULL) {
         gpuId = atoi(value);
-        //printf("USE_GPU set to %d\n", gpuId);
+        //DBG("USE_GPU: %d\n", gpuId);
     }
     else
     {
