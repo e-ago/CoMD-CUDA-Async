@@ -10,7 +10,7 @@
 #include <mp.h>
 #include "comm.h"
 
-static int mpi_comm_rank=0;
+int mpi_comm_rank=0;
 
 int dbg_enabled()
 {
