@@ -449,14 +449,25 @@ static int typeAtomExchange=0;
 
 void haloExchange(HaloExchange* haloExchange, void* data)
 {  
-   if(comm_use_comm())
-   {
-      haloExchange_comm(haloExchange, data);
-      if(comm_use_async() || comm_use_gpu_comm())
-         comm_flush();
-   }
-   else //MPI
-      haloExchange_MPI(haloExchange, data);
+	#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+	#endif
+
+	startTimer(commHaloTimer);
+	if(comm_use_comm())
+	{
+		haloExchange_comm(haloExchange, data);
+		if(comm_use_async() || comm_use_gpu_comm())
+			comm_flush();
+	}
+	else //MPI
+		haloExchange_MPI(haloExchange, data);
+	
+	#ifdef COMMUNICATION_TIMERS
+		cudaDeviceSynchronize();
+	#endif
+	
+	stopTimer(commHaloTimer);
 }
 
 void haloExchange_comm(HaloExchange* haloExchange, void* data)
@@ -517,11 +528,6 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
-
-		#ifdef COMMUNICATION_TIMERS
-		 cudaDeviceSynchronize();
-		 startTimer(commHaloTimer);
-		#endif
 
 		if(comm_use_async())
 		{
@@ -1446,11 +1452,6 @@ void exchangeData(HaloExchange* haloExchange, void* data, int iAxis)
    char* recvBufP = haloExchange->recvBufP;
    char* recvBufM = haloExchange->recvBufM;
 
-#ifdef COMMUNICATION_TIMERS
-   cudaDeviceSynchronize();
-   startTimer(commHaloTimer);
-#endif
-
    int nSendM = haloExchange->loadBuffer(haloExchange->parms, data, faceM, sendBufM);
    int nSendP = haloExchange->loadBuffer(haloExchange->parms, data, faceP, sendBufP);
 
@@ -1459,24 +1460,11 @@ void exchangeData(HaloExchange* haloExchange, void* data, int iAxis)
 
    int nRecvM, nRecvP;
 
-#ifndef COMMUNICATION_TIMERS
-   startTimer(commHaloTimer);
-#endif
-
    nRecvP = sendReceiveParallel(sendBufM, nSendM, nbrRankM, recvBufP, haloExchange->bufCapacity, nbrRankP);
    nRecvM = sendReceiveParallel(sendBufP, nSendP, nbrRankP, recvBufM, haloExchange->bufCapacity, nbrRankM);
    
-#ifndef COMMUNICATION_TIMERS
-   stopTimer(commHaloTimer);
-#endif
-
    haloExchange->unloadBuffer(haloExchange->parms, data, faceM, nRecvM, recvBufM);
    haloExchange->unloadBuffer(haloExchange->parms, data, faceP, nRecvP, recvBufP);
-
-#ifdef COMMUNICATION_TIMERS
-   cudaDeviceSynchronize();
-   stopTimer(commHaloTimer);
-#endif
 }
 
 /// Make a list of link cells that need to be sent across the specified
