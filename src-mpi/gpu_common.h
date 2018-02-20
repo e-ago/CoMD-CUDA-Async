@@ -294,7 +294,7 @@ __device__ inline void atomicAdd(double *address, double value)
 }
 #endif
 
-/*#if (__CUDACC_VER_MAJOR__ < 8)
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
 __device__ inline void atomicAdd(double *address, double value)
 {
   unsigned long long oldval, newval, readback;
@@ -307,7 +307,7 @@ __device__ inline void atomicAdd(double *address, double value)
   }
 }
 #endif
-*/
+
 static __device__ __forceinline__ int get_warp_id()
 {
   return threadIdx.x >> 5;
