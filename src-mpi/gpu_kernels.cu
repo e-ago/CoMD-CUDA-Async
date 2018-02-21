@@ -962,7 +962,7 @@ void exchangeDataForceGpu_KI(
 		CUDA_GET_LAST_ERROR
 	}
 
-	comm_dev_descs_t descs = get_start_descs_req();
+	comm_dev_descs_t descs = NULL; //get_start_descs_req();
 	descs = descs + iAxis;
 
 	exchangeData_Force_KI<<<(grid0+grid0+grid1+1), THREAD_ATOM_CTA, 0, stream>>>(
