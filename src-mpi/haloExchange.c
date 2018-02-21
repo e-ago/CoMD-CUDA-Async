@@ -48,6 +48,54 @@
 
 #define MAX(A,B) ((A) > (B) ? (A) : (B))
 
+#include <sys/time.h>
+
+#define TIMER_DEF(n)     struct timeval temp_1_##n={0,0}, temp_2_##n={0,0}
+#define TIMER_START(n)   gettimeofday(&temp_1_##n, (struct timezone*)0)
+#define TIMER_STOP(n)    gettimeofday(&temp_2_##n, (struct timezone*)0)
+#define TIMER_ELAPSED(n) ((temp_2_##n.tv_sec-temp_1_##n.tv_sec)*1.e6+(temp_2_##n.tv_usec-temp_1_##n.tv_usec))
+
+//#ifdef _NVPROF_NVTX
+
+#include "nvToolsExt.h"
+
+#define COMM_VERT    1
+#define COMM_HORIZ  2
+#define SCAN_COL    3
+#define APPEND_ROWS 4
+#define ALL_REDUCE  5
+#define EX_SCAN      6
+#define SEND      7
+#define RECEIVE      8
+#define OTHER     9
+
+
+#define PUSH_RANGE(name,cid)                                                                 \
+   do {                                                                                                  \
+     const uint32_t colors[] = {                                                             \
+            0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff, 0xff000000, 0xff0000ff, 0x55ff3300, 0xff660000, 0x66330000  \
+      };                                                                                                 \
+      const int num_colors = sizeof(colors)/sizeof(colors[0]);                \
+      int color_id = cid%num_colors;                                                   \
+    nvtxEventAttributes_t eventAttrib = {0};                                  \
+    eventAttrib.version = NVTX_VERSION;                                             \
+    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;                      \
+    eventAttrib.colorType = NVTX_COLOR_ARGB;                                  \
+    eventAttrib.color = colors[color_id];                                        \
+    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII;                     \
+    eventAttrib.message.ascii = name;                                               \
+    nvtxRangePushEx(&eventAttrib);                                                  \
+   } while(0)
+
+#define POP_RANGE do { nvtxRangePop(); } while(0)
+
+/*
+#else
+#define PUSH_RANGE(name,cid) {}
+#define POP_RANGE {}
+#endif
+*/
+
 /// Don't change the order of the faces in this enum.
 enum HaloFaceOrder {HALO_X_MINUS, HALO_X_PLUS,
                     HALO_Y_MINUS, HALO_Y_PLUS,
@@ -468,7 +516,6 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 	if(haloExchange->type == 0)
 	{
 		PUSH_RANGE("setupAtom", 1);
-
 		AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
 
 		for (int iAxis=0; iAxis<3; ++iAxis)
@@ -515,6 +562,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 					comm_send_ready(nbrRankM, &ready_requests[(2*iAxis)+1]);
 			}
 		}
+		
 		POP_RANGE;
 
 		if(comm_use_async())
@@ -720,56 +768,6 @@ HaloExchange* initHaloExchange(Domain* domain)
 
    return hh;
 }
-
-
-#include <sys/time.h>
-
-#define TIMER_DEF(n)     struct timeval temp_1_##n={0,0}, temp_2_##n={0,0}
-#define TIMER_START(n)   gettimeofday(&temp_1_##n, (struct timezone*)0)
-#define TIMER_STOP(n)    gettimeofday(&temp_2_##n, (struct timezone*)0)
-#define TIMER_ELAPSED(n) ((temp_2_##n.tv_sec-temp_1_##n.tv_sec)*1.e6+(temp_2_##n.tv_usec-temp_1_##n.tv_usec))
-
-//elenago
-//#ifdef _NVPROF_NVTX
-
-#include "nvToolsExt.h"
-
-#define COMM_VERT    1
-#define COMM_HORIZ  2
-#define SCAN_COL    3
-#define APPEND_ROWS 4
-#define ALL_REDUCE  5
-#define EX_SCAN      6
-#define SEND      7
-#define RECEIVE      8
-#define OTHER     9
-
-
-#define PUSH_RANGE(name,cid)                                                                 \
-   do {                                                                                                  \
-     const uint32_t colors[] = {                                                             \
-            0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff, 0xff000000, 0xff0000ff, 0x55ff3300, 0xff660000, 0x66330000  \
-      };                                                                                                 \
-      const int num_colors = sizeof(colors)/sizeof(colors[0]);                \
-      int color_id = cid%num_colors;                                                   \
-    nvtxEventAttributes_t eventAttrib = {0};                                  \
-    eventAttrib.version = NVTX_VERSION;                                             \
-    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;                      \
-    eventAttrib.colorType = NVTX_COLOR_ARGB;                                  \
-    eventAttrib.color = colors[color_id];                                        \
-    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII;                     \
-    eventAttrib.message.ascii = name;                                               \
-    nvtxRangePushEx(&eventAttrib);                                                  \
-   } while(0)
-
-#define POP_RANGE do { nvtxRangePop(); } while(0)
-
-/*
-#else
-#define PUSH_RANGE(name,cid) {}
-#define POP_RANGE {}
-#endif
-*/
 
 void exchangeData_Atom_Comm(
    HaloExchange* haloExchange, void* data, int iAxis, 
