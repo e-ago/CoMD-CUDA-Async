@@ -467,6 +467,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 	//type == 0 for atom-exchange
 	if(haloExchange->type == 0)
 	{
+		PUSH_RANGE("setupAtom", 1);
+
 		AtomExchangeParms* parms = (AtomExchangeParms*) haloExchange->parms;
 
 		for (int iAxis=0; iAxis<3; ++iAxis)
@@ -513,18 +515,28 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 					comm_send_ready(nbrRankM, &ready_requests[(2*iAxis)+1]);
 			}
 		}
+		POP_RAGE;
 
 		if(comm_use_async())
 		{
 			for (int iAxis=0; iAxis<3; ++iAxis)
+			{
+				PUSH_RANGE("exchangeAtomAsync", 2);
 				exchangeData_Atom_Async(haloExchange, data, iAxis, recv_requests+(2*iAxis),
-		                    			send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);
+										send_requests+(2*iAxis), ready_requests+(2*iAxis), 2);
+				POP_RANGE;
+				
+			}
 		}
 		else if(comm_use_comm())
 		{
 			for (int iAxis=0; iAxis<3; ++iAxis)
+			{
+				PUSH_RANGE("exchangeAtomComm", 2);
 				exchangeData_Atom_Comm(haloExchange, data, iAxis, recv_requests+(2*iAxis),
 										send_requests+(2*iAxis), ready_requests+(2*iAxis), 2); 
+				POP_RANGE;
+			}
 		}
 	}
 	else
@@ -535,6 +547,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 
 		// if (comm_use_comm() && comm_use_gpu_comm()) 
 		// 	get_curr_descs_req();
+
+		PUSH_RANGE("setupForce", 1);
 
 		for (int iAxis=0; iAxis<3; ++iAxis)
 		{
@@ -622,6 +636,8 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 			#endif
 		}
 
+		POP_RANGE;
+
 		for (int iAxis=0; iAxis<3; ++iAxis)
 		{
 			if (comm_use_comm() && comm_use_gpu_comm())
@@ -633,15 +649,23 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 			}
 			else if (comm_use_comm() && comm_use_async())
 			{
+				PUSH_RANGE("exchangeForceAsync", 2);
+				
 				exchangeData_Force_Async(haloExchange, data, iAxis, 
 					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
+					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);
+			
+				POP_RANGE;
 			}
 			else if (comm_use_comm())
 			{
+				PUSH_RANGE("exchangeForceComm", 2);
+
 				exchangeData_Force_Comm(haloExchange, data, iAxis, 
 					recv_requests+(2*iAxis), send_requests+(2*iAxis), ready_requests+(2*iAxis),
-					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);        
+					sendSizeM, sendSizeP,  recvSizeM,  recvSizeP, 2);
+				
+				POP_RANGE;
 			}
 		}
 
@@ -667,7 +691,7 @@ void haloExchange(HaloExchange* haloExchange, void* data)
 	if(comm_use_comm())
 	{
 		haloExchange_comm(haloExchange, data);
-		if(comm_use_async() || comm_use_gpu_comm())
+		if(comm_use_comm())
 			comm_flush();
 	}
 	else //MPI
@@ -1197,7 +1221,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 	{
 		if(getMyRank() ==  nbrRankM)
 		{
-			PUSH_RANGE("nbrRankM", 1);
+			PUSH_RANGE("nbrRankM", 3);
 
 			loadForceBufferFromGpu_Async(recvBufP, sendSizeM[iAxis], nCellsM, parms->sendCellsGpu[faceM], 
 				parms->natoms_buf_send[faceM], parms->partial_sums[faceM],
@@ -1228,7 +1252,7 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 
 		if((getMyRank() == nbrRankP))
 		{
-			PUSH_RANGE("nbrRankP", 2);
+			PUSH_RANGE("nbrRankP", 3);
 
 			if(getMyRank() != nbrRankM)
 				printf("Warning P! My rank: %d, RankM: %d RankP: %d\n", getMyRank(), nbrRankM, nbrRankP);
@@ -1297,6 +1321,8 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 
 	if(typeFunc == 1 || typeFunc == 2)
 	{
+		PUSH_RANGE("unload scan", 4);
+
 		unloadForceScanCells(nCellsM, parms->recvCellsGpu[faceM], 
 			/* natoms_buf_recv */
 			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
@@ -1308,13 +1334,16 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
 			sim, sim->boundary_stream);
 		
-		PUSH_RANGE("UNLOAD", 4);
-		
+		POP_RANGE;
+
 		//-------- Wait recv on stream
+		PUSH_RANGE("wait recv", 5);
 		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
 			comm_wait_all_on_stream(2, recv_requests, sim->boundary_stream);
+		POP_RANGE;
 
 		//-------- Unload P
+		PUSH_RANGE("unload gpu", 6);
 		unloadForceBufferToGpu_Async(recvBufP, recvSizeP[iAxis], nCellsP, parms->recvCellsGpu[faceP], 
 			/* natoms_buf_recv */
 			parms->natoms_buf_recv[faceP], parms->partial_sums[faceP], 
@@ -1325,7 +1354,9 @@ void exchangeData_Force_Async(HaloExchange* haloExchange, void* data, int iAxis,
 			/* natoms_buf_recv */
 			parms->natoms_buf_recv[faceM], parms->partial_sums[faceM], 
 			sim, sim->gpu_force_buf, sim->boundary_stream, typeM);  
+		POP_RANGE;
 
+		PUSH_RANGE("wait sr", 7);
 		if((getMyRank() != nbrRankM) && (getMyRank() != nbrRankP))
 		{
 			comm_wait_all_on_stream(2, send_requests, sim->boundary_stream);
@@ -1463,27 +1494,33 @@ void exchangeData_Force_KI(HaloExchange* haloExchange, void* data, int iAxis,
 ///                       unload functions
 void exchangeData(HaloExchange* haloExchange, void* data, int iAxis)
 {
-   enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
-   enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
+	enum HaloFaceOrder faceM = (enum HaloFaceOrder)(2*iAxis);
+	enum HaloFaceOrder faceP = (enum HaloFaceOrder)(faceM+1);
 
-   char* sendBufM = haloExchange->sendBufM;
-   char* sendBufP = haloExchange->sendBufP;
-   char* recvBufP = haloExchange->recvBufP;
-   char* recvBufM = haloExchange->recvBufM;
+	char* sendBufM = haloExchange->sendBufM;
+	char* sendBufP = haloExchange->sendBufP;
+	char* recvBufP = haloExchange->recvBufP;
+	char* recvBufM = haloExchange->recvBufM;
 
-   int nSendM = haloExchange->loadBuffer(haloExchange->parms, data, faceM, sendBufM);
-   int nSendP = haloExchange->loadBuffer(haloExchange->parms, data, faceP, sendBufP);
+	PUSH_RANGE("MPIload", 3);
+	int nSendM = haloExchange->loadBuffer(haloExchange->parms, data, faceM, sendBufM);
+	int nSendP = haloExchange->loadBuffer(haloExchange->parms, data, faceP, sendBufP);
+	POP_RANGE;
 
-   int nbrRankM = haloExchange->nbrRank[faceM];
-   int nbrRankP = haloExchange->nbrRank[faceP];
+	int nbrRankM = haloExchange->nbrRank[faceM];
+	int nbrRankP = haloExchange->nbrRank[faceP];
 
-   int nRecvM, nRecvP;
+	int nRecvM, nRecvP;
 
-   nRecvP = sendReceiveParallel(sendBufM, nSendM, nbrRankM, recvBufP, haloExchange->bufCapacity, nbrRankP);
-   nRecvM = sendReceiveParallel(sendBufP, nSendP, nbrRankP, recvBufM, haloExchange->bufCapacity, nbrRankM);
-   
-   haloExchange->unloadBuffer(haloExchange->parms, data, faceM, nRecvM, recvBufM);
-   haloExchange->unloadBuffer(haloExchange->parms, data, faceP, nRecvP, recvBufP);
+	PUSH_RANGE("MPI send", 4);
+	nRecvP = sendReceiveParallel(sendBufM, nSendM, nbrRankM, recvBufP, haloExchange->bufCapacity, nbrRankP);
+	nRecvM = sendReceiveParallel(sendBufP, nSendP, nbrRankP, recvBufM, haloExchange->bufCapacity, nbrRankM);
+	POP_RANGE;
+
+	PUSH_RANGE("MPIunload", 5);
+	haloExchange->unloadBuffer(haloExchange->parms, data, faceM, nRecvM, recvBufM);
+	haloExchange->unloadBuffer(haloExchange->parms, data, faceP, nRecvP, recvBufP);
+	POP_RANGE;
 }
 
 /// Make a list of link cells that need to be sent across the specified
