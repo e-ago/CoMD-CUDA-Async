@@ -515,7 +515,7 @@ void haloExchange_comm(HaloExchange* haloExchange, void* data)
 					comm_send_ready(nbrRankM, &ready_requests[(2*iAxis)+1]);
 			}
 		}
-		POP_RAGE;
+		POP_RANGE;
 
 		if(comm_use_async())
 		{
