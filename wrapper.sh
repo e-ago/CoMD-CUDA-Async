@@ -6,6 +6,9 @@ params=$*
 
 extra_params=
 lrank=$OMPI_COMM_WORLD_LOCAL_RANK
+USE_CPU=0;
+USE_GPU=0;
+MP_USE_IB_HCA=mlx5_0;
 
 case ${HOSTNAME} in
 	*dgx*)
@@ -49,7 +52,7 @@ export \
 	COMM_USE_COMM COMM_USE_ASYNC COMM_USE_GPU_COMM OMP_NUM_THREADS \
 	OMPI_MCA_btl_openib_if_include \
 	GDS_ENABLE_DUMP_MEMOPS \
-	USE_MPI GDS_FLUSHER_TYPE
+	USE_MPI GDS_FLUSHER_TYPE LD_LIBRARY_PATH PATH
     
 #set -x
 
